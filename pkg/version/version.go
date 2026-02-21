@@ -42,7 +42,7 @@ func GetVersion() VersionInfo {
 
 // String returns the version string
 func (v VersionInfo) String() string {
-	version := fmt.Sprintf("vps-init v%s", v.Version)
+	version := fmt.Sprintf("mellow v%s", v.Version)
 	if v.GitCommit != "" {
 		shortCommit := v.GitCommit
 		if len(shortCommit) > 8 {

@@ -8,9 +8,11 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+	"github.com/wasilwamark/mellow/internal/distro"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 // Connection interface defines the contract for SSH connections
@@ -22,7 +24,7 @@ type Connection interface {
 	DownloadFile(remotePath, localPath string) error
 	Close() error
 
-	// Enhanced SSH operations (from vps-init-ssh)
+	// Enhanced SSH operations (from mellow-ssh)
 	Connect() bool
 	Disconnect()
 	Reconnect() error
@@ -55,6 +57,7 @@ type Connection interface {
 	InstallPackage(packageName string) bool
 
 	// Platform detection
+	GetDistroInfo() interface{}
 	IsUbuntu() bool
 	IsDebian() bool
 	IsCentOS() bool
@@ -71,6 +74,7 @@ type Config struct {
 	Host         string
 	User         string
 	Port         int
+	Password     string
 	IdentityFile string
 	SudoPass     string
 	Timeout      time.Duration
@@ -86,7 +90,9 @@ func DefaultConfig() Config {
 
 // connection implements the Connection interface
 type connection struct {
-	config Config
+	config     Config
+	distroInfo *distro.DistroInfo
+	distroOnce sync.Once
 }
 
 // NewConnection creates a new SSH connection
@@ -241,6 +247,22 @@ func (c *connection) buildSSHArgs() []string {
 	return args
 }
 
+// setupAskPass configures the environment for the command to use the built-in askpass
+func (c *connection) setupAskPass(command *exec.Cmd) {
+	if c.config.Password != "" {
+		executable, err := os.Executable()
+		if err == nil {
+			command.Env = append(os.Environ(),
+				"SSH_ASKPASS="+executable,
+				"SSH_ASKPASS_REQUIRE=force",
+				"DISPLAY=dummy:0",
+				"MELLOW_ASKPASS_MODE=1",
+				"MELLOW_SSH_PASS="+c.config.Password,
+			)
+		}
+	}
+}
+
 // runCommandWithContext executes a command with context
 func (c *connection) runCommandWithContext(ctx context.Context, cmd string) plugin.Result {
 	startTime := time.Now()
@@ -254,6 +276,7 @@ func (c *connection) runCommandWithContext(ctx context.Context, cmd string) plug
 
 	// Create command with context if timeout is specified
 	command := exec.CommandContext(ctx, "ssh", sshArgs...)
+	c.setupAskPass(command)
 
 	// Set up buffers
 	var stdout, stderr bytes.Buffer
@@ -323,7 +346,7 @@ func (c *connection) convertResult(result result) plugin.Result {
 	}
 }
 
-// Helper methods for advanced features (from vps-init-ssh)
+// Helper methods for advanced features (from mellow-ssh)
 
 // RunInteractive runs a command and streams stdout/stderr to the current process
 func (c *connection) RunInteractive(cmd string) error {
@@ -335,6 +358,7 @@ func (c *connection) RunInteractive(cmd string) error {
 	)
 
 	command := exec.Command("ssh", sshArgs...)
+	c.setupAskPass(command)
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 	command.Stdin = os.Stdin
@@ -351,6 +375,7 @@ func (c *connection) Shell() error {
 	)
 
 	command := exec.Command("ssh", sshArgs...)
+	c.setupAskPass(command)
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 	command.Stdin = os.Stdin
@@ -498,10 +523,10 @@ func (c *connection) IsHealthy() bool {
 // GetConnectionStats returns connection statistics
 func (c *connection) GetConnectionStats() *plugin.ConnectionStats {
 	return &plugin.ConnectionStats{
-		ConnectedAt:  time.Now(),
-		LastActivity: time.Now(),
-		CommandsRun:  0,
-		BytesSent:    0,
+		ConnectedAt:   time.Now(),
+		LastActivity:  time.Now(),
+		CommandsRun:   0,
+		BytesSent:     0,
 		BytesReceived: 0,
 	}
 }
@@ -625,34 +650,72 @@ func (c *connection) Systemctl(action, service string) bool {
 	return result.Success
 }
 
+// GetDistroInfo detects and returns distribution information
+func (c *connection) GetDistroInfo() interface{} {
+	c.distroOnce.Do(func() {
+		result := c.RunCommand("cat /etc/os-release", false)
+		if result.Success {
+			osRelease, err := distro.DetectOSRelease(result.Stdout)
+			if err == nil {
+				c.distroInfo = distro.GetDistroInfo(osRelease)
+			}
+		}
+
+		if c.distroInfo == nil {
+			c.distroInfo = &distro.DistroInfo{
+				ID:         "unknown",
+				Name:       "Unknown",
+				Family:     distro.DistroFamilyDebian,
+				PackageMgr: distro.PackageManagerAPT,
+				ServiceMgr: distro.ServiceManagerSystemd,
+			}
+		}
+	})
+	return c.distroInfo
+}
+
 // InstallPackage installs a package
 func (c *connection) InstallPackage(packageName string) bool {
-	result := c.RunCommand(fmt.Sprintf("apt-get install -y %s", packageName), true)
+	distroInfo := c.GetDistroInfo().(*distro.DistroInfo)
+
+	var cmd string
+	switch distroInfo.PackageMgr {
+	case distro.PackageManagerAPT:
+		cmd = fmt.Sprintf("apt-get install -y %s", packageName)
+	case distro.PackageManagerDNF:
+		cmd = fmt.Sprintf("dnf install -y %s", packageName)
+	case distro.PackageManagerYUM:
+		cmd = fmt.Sprintf("yum install -y %s", packageName)
+	case distro.PackageManagerPacman:
+		cmd = fmt.Sprintf("pacman -S --noconfirm %s", packageName)
+	case distro.PackageManagerAPK:
+		cmd = fmt.Sprintf("apk add %s", packageName)
+	default:
+		cmd = fmt.Sprintf("apt-get install -y %s", packageName)
+	}
+
+	result := c.RunCommand(cmd, true)
 	return result.Success
 }
 
 // IsUbuntu checks if system is Ubuntu
 func (c *connection) IsUbuntu() bool {
-	result := c.RunCommand("lsb_release -si", false)
-	return result.Success && strings.Contains(strings.ToUpper(result.Stdout), "UBUNTU")
+	return c.GetDistroInfo().(*distro.DistroInfo).IsUbuntu()
 }
 
 // IsDebian checks if system is Debian
 func (c *connection) IsDebian() bool {
-	result := c.RunCommand("lsb_release -si", false)
-	return result.Success && strings.Contains(strings.ToUpper(result.Stdout), "DEBIAN")
+	return c.GetDistroInfo().(*distro.DistroInfo).IsDebian()
 }
 
 // IsCentOS checks if system is CentOS
 func (c *connection) IsCentOS() bool {
-	result := c.RunCommand("lsb_release -si", false)
-	return result.Success && strings.Contains(strings.ToUpper(result.Stdout), "CENTOS")
+	return c.GetDistroInfo().(*distro.DistroInfo).IsCentOS()
 }
 
 // IsRedHat checks if system is RedHat
 func (c *connection) IsRedHat() bool {
-	result := c.RunCommand("lsb_release -si", false)
-	return result.Success && strings.Contains(strings.ToUpper(result.Stdout), "RED HAT")
+	return c.GetDistroInfo().(*distro.DistroInfo).IsRedHat()
 }
 
 // Helper function to create connection from SSHConfig (used by config.go)

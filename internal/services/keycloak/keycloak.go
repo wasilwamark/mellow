@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	sudoPass := getSudoPass(flags)
+	sshPass := getPassword(flags)
 
 	fmt.Println("🔐 Installing Keycloak...")
 
@@ -34,7 +34,7 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 
 	// Check Docker
 	if result := conn.RunCommand("docker --version", plugin.WithHideOutput()); !result.Success {
-		return fmt.Errorf("Docker is not installed. Please install Docker first: vps-init docker install")
+		return fmt.Errorf("Docker is not installed. Please install Docker first: mellow docker install")
 	}
 
 	// Check Docker Compose
@@ -47,7 +47,7 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 	adminPassword := generateRandomPassword(32)
 
 	fmt.Println("📁 Creating installation directory...")
-	if result := conn.RunSudo(fmt.Sprintf("mkdir -p %s", keycloakDir), sudoPass); !result.Success {
+	if result := conn.RunSudo(fmt.Sprintf("mkdir -p %s", keycloakDir), sshPass); !result.Success {
 		return fmt.Errorf("failed to create installation directory: %s", result.Stderr)
 	}
 
@@ -60,7 +60,7 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 	}
 
 	// Set ownership
-	if result := conn.RunSudo(fmt.Sprintf("chown -R $USER:$USER %s", keycloakDir), sudoPass); !result.Success {
+	if result := conn.RunSudo(fmt.Sprintf("chown -R $USER:$USER %s", keycloakDir), sshPass); !result.Success {
 		return fmt.Errorf("failed to set ownership: %s", result.Stderr)
 	}
 
@@ -94,20 +94,20 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 	}
 
 	for _, cmd := range nginxCmds {
-		if result := conn.RunSudo(cmd, sudoPass); !result.Success {
+		if result := conn.RunSudo(cmd, sshPass); !result.Success {
 			return fmt.Errorf("failed to configure nginx: %s", result.Stderr)
 		}
 	}
 
 	// Test nginx config
-	if result := conn.RunSudo("nginx -t", sudoPass); !result.Success {
+	if result := conn.RunSudo("nginx -t", sshPass); !result.Success {
 		fmt.Println("⚠️  Nginx config test failed, removing configuration...")
-		conn.RunSudo(fmt.Sprintf("rm -f %s /etc/nginx/sites-enabled/%s", nginxConfigPath, domain), sudoPass)
+		conn.RunSudo(fmt.Sprintf("rm -f %s /etc/nginx/sites-enabled/%s", nginxConfigPath, domain), sshPass)
 		return fmt.Errorf("nginx configuration error: %s", result.Stderr)
 	}
 
 	// Reload nginx
-	if result := conn.RunSudo("systemctl reload nginx", sudoPass); !result.Success {
+	if result := conn.RunSudo("systemctl reload nginx", sshPass); !result.Success {
 		return fmt.Errorf("failed to reload nginx: %s", result.Stderr)
 	}
 
@@ -131,7 +131,7 @@ Installation Date: %s
 	}
 
 	// Set file permissions
-	if result := conn.RunSudo(fmt.Sprintf("chmod 600 %s", credentialsFile), sudoPass); !result.Success {
+	if result := conn.RunSudo(fmt.Sprintf("chmod 600 %s", credentialsFile), sshPass); !result.Success {
 		fmt.Printf("⚠️  Failed to set credentials file permissions\n")
 	}
 
@@ -143,14 +143,14 @@ Installation Date: %s
 	fmt.Printf("🔑 Admin Credentials saved to: %s\n", credentialsFile)
 	fmt.Printf("\n⚠️  Important:\n")
 	fmt.Printf("- Store the admin password securely\n")
-	fmt.Printf("- Configure SSL after installation: vps-init keycloak ssl %s\n", domain)
+	fmt.Printf("- Configure SSL after installation: mellow keycloak ssl %s\n", domain)
 	fmt.Printf("- Update DNS to point %s to this server\n", domain)
 
 	return nil
 }
 
 func (p *Plugin) uninstallHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	sudoPass := getSudoPass(flags)
+	sshPass := getPassword(flags)
 
 	fmt.Println("🗑️  Uninstalling Keycloak...")
 
@@ -180,15 +180,15 @@ func (p *Plugin) uninstallHandler(ctx context.Context, conn plugin.Connection, a
 	}
 
 	for _, cmd := range nginxCmds {
-		conn.RunSudo(cmd, sudoPass)
+		conn.RunSudo(cmd, sshPass)
 	}
 
 	// Reload nginx
-	conn.RunSudo("systemctl reload nginx", sudoPass)
+	conn.RunSudo("systemctl reload nginx", sshPass)
 
 	// Remove installation directory
 	fmt.Println("📁 Removing installation directory...")
-	if result := conn.RunSudo(fmt.Sprintf("rm -rf %s", keycloakDir), sudoPass); !result.Success {
+	if result := conn.RunSudo(fmt.Sprintf("rm -rf %s", keycloakDir), sshPass); !result.Success {
 		fmt.Printf("⚠️  Failed to remove installation directory: %s\n", result.Stderr)
 	}
 
@@ -418,7 +418,7 @@ func (p *Plugin) clientHandler(ctx context.Context, conn plugin.Connection, args
 }
 
 func (p *Plugin) sslHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	sudoPass := getSudoPass(flags)
+	sshPass := getPassword(flags)
 
 	domain := "keycloak.local"
 	if len(args) > 0 {
@@ -429,14 +429,17 @@ func (p *Plugin) sslHandler(ctx context.Context, conn plugin.Connection, args []
 
 	// Install certbot and nginx plugin
 	fmt.Println("📦 Installing Certbot...")
-	installCmds := []string{
-		"apt-get update",
-		"apt-get install -y certbot python3-certbot-nginx",
+	pkgMgr := getPackageManager(conn)
+	updateCmd, _ := pkgMgr.Update()
+	if result := conn.RunSudo(updateCmd, sshPass); !result.Success {
+		fmt.Printf("⚠️  Failed to update packages: %s\n", result.Stderr)
 	}
-
-	for _, cmd := range installCmds {
-		if result := conn.RunSudo(cmd, sudoPass); !result.Success {
-			fmt.Printf("⚠️  Failed to run '%s': %s\n", cmd, result.Stderr)
+	installCmd, err := pkgMgr.Install("certbot", "python3-certbot-nginx")
+	if err != nil {
+		fmt.Printf("⚠️  Failed to install certbot: %v\n", err)
+	} else {
+		if result := conn.RunSudo(installCmd, sshPass); !result.Success {
+			fmt.Printf("⚠️  Failed to install certbot: %s\n", result.Stderr)
 		}
 	}
 
@@ -444,7 +447,7 @@ func (p *Plugin) sslHandler(ctx context.Context, conn plugin.Connection, args []
 	fmt.Printf("🔐 Obtaining SSL certificate for %s...\n", domain)
 	cmd := fmt.Sprintf("certbot --nginx -d %s --non-interactive --agree-tos --email admin@%s", domain, domain)
 
-	if result := conn.RunSudo(cmd, sudoPass); !result.Success {
+	if result := conn.RunSudo(cmd, sshPass); !result.Success {
 		return fmt.Errorf("failed to obtain SSL certificate: %s", result.Stderr)
 	}
 
@@ -485,16 +488,16 @@ server {
 		return fmt.Errorf("failed to write SSL config: %v", err)
 	}
 
-	if result := conn.RunSudo(fmt.Sprintf("mv /tmp/%s-ssl.conf %s", domain, nginxConfigPath), sudoPass); !result.Success {
+	if result := conn.RunSudo(fmt.Sprintf("mv /tmp/%s-ssl.conf %s", domain, nginxConfigPath), sshPass); !result.Success {
 		return fmt.Errorf("failed to update nginx config: %s", result.Stderr)
 	}
 
 	// Test and reload nginx
-	if result := conn.RunSudo("nginx -t", sudoPass); !result.Success {
+	if result := conn.RunSudo("nginx -t", sshPass); !result.Success {
 		return fmt.Errorf("nginx config test failed: %s", result.Stderr)
 	}
 
-	if result := conn.RunSudo("systemctl reload nginx", sudoPass); !result.Success {
+	if result := conn.RunSudo("systemctl reload nginx", sshPass); !result.Success {
 		return fmt.Errorf("failed to reload nginx: %s", result.Stderr)
 	}
 
@@ -503,8 +506,8 @@ server {
 	keycloakDir := "/opt/keycloak"
 
 	// Update docker-compose.yml to enable HTTPS
-	updateCmd := fmt.Sprintf(`cd %s && sed -i 's/KC_HOSTNAME_STRICT_HTTPS: false/KC_HOSTNAME_STRICT_HTTPS: true/' docker-compose.yml`, keycloakDir)
-	conn.RunCommand(updateCmd, plugin.WithHideOutput())
+	updateComposeCmd := fmt.Sprintf("cd %s && sed -i +e 's/KC_HOSTNAME_STRICT_HTTPS: false/KC_HOSTNAME_STRICT_HTTPS: true/' docker-compose.yml", keycloakDir)
+	conn.RunCommand(updateComposeCmd, plugin.WithHideOutput())
 
 	// Restart Keycloak to apply changes
 	fmt.Println("🔄 Restarting Keycloak to apply SSL configuration...")
@@ -520,7 +523,7 @@ server {
 }
 
 func (p *Plugin) backupHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	sudoPass := getSudoPass(flags)
+	sshPass := getPassword(flags)
 
 	fmt.Println("💾 Creating Keycloak backup...")
 
@@ -529,7 +532,7 @@ func (p *Plugin) backupHandler(ctx context.Context, conn plugin.Connection, args
 
 	// Create backup directory
 	fmt.Printf("📁 Creating backup directory: %s\n", backupDir)
-	if result := conn.RunSudo(fmt.Sprintf("mkdir -p %s", backupDir), sudoPass); !result.Success {
+	if result := conn.RunSudo(fmt.Sprintf("mkdir -p %s", backupDir), sshPass); !result.Success {
 		return fmt.Errorf("failed to create backup directory: %s", result.Stderr)
 	}
 
@@ -546,12 +549,12 @@ func (p *Plugin) backupHandler(ctx context.Context, conn plugin.Connection, args
 
 	// Backup directory
 	cmd := fmt.Sprintf("tar -czf %s %s", backupFile, keycloakDir)
-	if result := conn.RunSudo(cmd, sudoPass); !result.Success {
+	if result := conn.RunSudo(cmd, sshPass); !result.Success {
 		return fmt.Errorf("failed to create backup: %s", result.Stderr)
 	}
 
 	// Set permissions
-	if result := conn.RunSudo(fmt.Sprintf("chmod 600 %s", backupFile), sudoPass); !result.Success {
+	if result := conn.RunSudo(fmt.Sprintf("chmod 600 %s", backupFile), sshPass); !result.Success {
 		fmt.Printf("⚠️  Failed to set backup permissions\n")
 	}
 
@@ -567,7 +570,7 @@ func (p *Plugin) backupHandler(ctx context.Context, conn plugin.Connection, args
 }
 
 func (p *Plugin) restoreHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	sudoPass := getSudoPass(flags)
+	sshPass := getPassword(flags)
 
 	if len(args) < 1 {
 		return fmt.Errorf("usage: restore <backup-file>")
@@ -590,14 +593,14 @@ func (p *Plugin) restoreHandler(ctx context.Context, conn plugin.Connection, arg
 
 	// Remove current installation
 	fmt.Println("🗑️  Removing current installation...")
-	if result := conn.RunSudo("rm -rf /opt/keycloak", sudoPass); !result.Success {
+	if result := conn.RunSudo("rm -rf /opt/keycloak", sshPass); !result.Success {
 		return fmt.Errorf("failed to remove current installation: %s", result.Stderr)
 	}
 
 	// Extract backup
 	fmt.Println("📂 Extracting backup...")
 	cmd := fmt.Sprintf("cd /opt && tar -xzf %s", backupFile)
-	if result := conn.RunSudo(cmd, sudoPass); !result.Success {
+	if result := conn.RunSudo(cmd, sshPass); !result.Success {
 		return fmt.Errorf("failed to extract backup: %s", result.Stderr)
 	}
 

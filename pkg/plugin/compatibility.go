@@ -33,7 +33,7 @@ func (cc *CompatibilityChecker) CheckCompatibility(plugin Plugin) *Compatibility
 		Warnings:   []string{},
 	}
 
-	// Check VPS-Init version compatibility
+	// Check Mellow version compatibility
 	if err := cc.checkVPSInitVersion(compat); err != nil {
 		result.Compatible = false
 		result.Errors = append(result.Errors, err.Error())
@@ -60,7 +60,7 @@ type CompatibilityResult struct {
 	Errors     []string
 }
 
-// checkVPSInitVersion checks VPS-Init version compatibility
+// checkVPSInitVersion checks Mellow version compatibility
 func (cc *CompatibilityChecker) checkVPSInitVersion(compat Compatibility) error {
 	if compat.MinVPSInitVersion == "" {
 		return nil // No minimum version requirement
@@ -68,7 +68,7 @@ func (cc *CompatibilityChecker) checkVPSInitVersion(compat Compatibility) error 
 
 	currentVersion, err := semver.NewVersion(cc.vpsInitVersion)
 	if err != nil {
-		return fmt.Errorf("invalid current VPS-Init version: %w", err)
+		return fmt.Errorf("invalid current Mellow version: %w", err)
 	}
 
 	minVersion, err := semver.NewConstraint(compat.MinVPSInitVersion)
@@ -77,7 +77,7 @@ func (cc *CompatibilityChecker) checkVPSInitVersion(compat Compatibility) error 
 	}
 
 	if !minVersion.Check(currentVersion) {
-		return fmt.Errorf("plugin requires VPS-Init version %s, but current version is %s",
+		return fmt.Errorf("plugin requires Mellow version %s, but current version is %s",
 			compat.MinVPSInitVersion, cc.vpsInitVersion)
 	}
 
@@ -89,7 +89,7 @@ func (cc *CompatibilityChecker) checkVPSInitVersion(compat Compatibility) error 
 		}
 
 		if !maxVersion.Check(currentVersion) {
-			return fmt.Errorf("plugin requires VPS-Init version <= %s, but current version is %s",
+			return fmt.Errorf("plugin requires Mellow version <= %s, but current version is %s",
 				compat.MaxVPSInitVersion, cc.vpsInitVersion)
 		}
 	}

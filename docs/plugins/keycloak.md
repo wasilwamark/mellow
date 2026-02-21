@@ -27,8 +27,8 @@ Before using the Keycloak plugin, ensure the following dependencies are installe
 
 You can install dependencies using:
 ```bash
-vps-init user@server docker install
-vps-init user@server nginx install
+mellow user@server docker install
+mellow user@server nginx install
 ```
 
 ## Installation
@@ -38,7 +38,7 @@ vps-init user@server nginx install
 Deploy Keycloak with default configuration:
 
 ```bash
-vps-init user@server keycloak install
+mellow user@server keycloak install
 ```
 
 ### Custom Domain Installation
@@ -46,7 +46,7 @@ vps-init user@server keycloak install
 Deploy Keycloak with a custom domain name:
 
 ```bash
-vps-init user@server keycloak install keycloak.example.com
+mellow user@server keycloak install keycloak.example.com
 ```
 
 ### What Gets Installed
@@ -73,7 +73,7 @@ After installation, you'll receive:
 Enable HTTPS with Let's Encrypt:
 
 ```bash
-vps-init user@server keycloak ssl your-domain.com
+mellow user@server keycloak ssl your-domain.com
 ```
 
 This will:
@@ -89,71 +89,71 @@ This will:
 
 ```bash
 # Start Keycloak services
-vps-init user@server keycloak start
+mellow user@server keycloak start
 
 # Stop Keycloak services
-vps-init user@server keycloak stop
+mellow user@server keycloak stop
 
 # Restart Keycloak services
-vps-init user@server keycloak restart
+mellow user@server keycloak restart
 
 # Check service status
-vps-init user@server keycloak status
+mellow user@server keycloak status
 
 # View service logs
-vps-init user@server keycloak logs [keycloak|keycloak-db]
+mellow user@server keycloak logs [keycloak|keycloak-db]
 ```
 
 ### Realm Management
 
 ```bash
 # List all realms
-vps-init user@server keycloak realm list
+mellow user@server keycloak realm list
 
 # Create a new realm
-vps-init user@server keycloak realm create my-realm
+mellow user@server keycloak realm create my-realm
 
 # Delete a realm
-vps-init user@server keycloak realm delete my-realm
+mellow user@server keycloak realm delete my-realm
 ```
 
 ### User Management
 
 ```bash
 # List users in default (master) realm
-vps-init user@server keycloak user list
+mellow user@server keycloak user list
 
 # Create a new user
-vps-init user@server keycloak user create john.doe
+mellow user@server keycloak user create john.doe
 
 # Create user in specific realm
-vps-init user@server keycloak user create john.doe my-realm
+mellow user@server keycloak user create john.doe my-realm
 
 # Reset user password
-vps-init user@server keycloak user reset-password john.doe
+mellow user@server keycloak user reset-password john.doe
 ```
 
 ### Client Management
 
 ```bash
 # List all clients
-vps-init user@server keycloak client list
+mellow user@server keycloak client list
 
 # Create a new client
-vps-init user@server keycloak client create my-app
+mellow user@server keycloak client create my-app
 
 # Create client in specific realm
-vps-init user@server keycloak client create my-app my-realm
+mellow user@server keycloak client create my-app my-realm
 ```
 
 ### Backup and Restore
 
 ```bash
 # Create backup
-vps-init user@server keycloak backup
+mellow user@server keycloak backup
 
 # Restore from backup
-vps-init user@server keycloak restore /var/backups/keycloak/keycloak_backup_20241219_120000.tar.gz
+mellow user@server keycloak restore /var/backups/keycloak/keycloak_backup_20241219_120000.tar.gz
 ```
 
 ### Interactive Configuration
@@ -161,7 +161,7 @@ vps-init user@server keycloak restore /var/backups/keycloak/keycloak_backup_2024
 Access the interactive configuration menu:
 
 ```bash
-vps-init user@server keycloak configure
+mellow user@server keycloak configure
 ```
 
 This menu provides options to:
@@ -176,7 +176,7 @@ This menu provides options to:
 Remove Keycloak completely:
 
 ```bash
-vps-init user@server keycloak uninstall [domain]
+mellow user@server keycloak uninstall [domain]
 ```
 
 This will:
@@ -211,10 +211,10 @@ This will:
 
 ```bash
 # Check service status
-vps-init user@server keycloak status
+mellow user@server keycloak status
 
 # View logs for errors
-vps-init user@server keycloak logs keycloak
+mellow user@server keycloak logs keycloak
 
 # Check Docker containers
 ssh user@server "docker ps -a"
@@ -247,7 +247,7 @@ ssh user@server "docker exec -it keycloak-db psql -U keycloak -d keycloak -c 'SE
 
 ```bash
 # Check resource usage
-vps-init user@server keycloak status
+mellow user@server keycloak status
 
 # Monitor Docker stats
 ssh user@server "docker stats"
@@ -262,17 +262,17 @@ ssh user@server "free -h && df -h"
 
 1. **Create Application Realm**:
    ```bash
-   vps-init user@server keycloak realm create my-apps
+   mellow user@server keycloak realm create my-apps
    ```
 
 2. **Create OAuth Client**:
    ```bash
-   vps-init user@server keycloak client create web-app my-apps
+   mellow user@server keycloak client create web-app my-apps
    ```
 
 3. **Create User**:
    ```bash
-   vps-init user@server keycloak user create app-user my-apps
+   mellow user@server keycloak user create app-user my-apps
    ```
 
 4. **Configure Your Application**:
@@ -351,8 +351,8 @@ Keycloak provides REST APIs for programmatic access:
 
 For issues related to the Keycloak plugin, check:
 
-1. Service logs: `vps-init user@server keycloak logs`
-2. Service status: `vps-init user@server keycloak status`
+1. Service logs: `mellow user@server keycloak logs`
+2. Service status: `mellow user@server keycloak status`
 3. Keycloak documentation: https://www.keycloak.org/documentation
 
 For Keycloak-specific questions and advanced configuration, refer to the official Keycloak documentation.

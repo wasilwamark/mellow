@@ -6,15 +6,17 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+
+	"github.com/wasilwamark/mellow/internal/distro"
+	"github.com/wasilwamark/mellow/internal/pkgmgr"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 type Plugin struct{}
 
 func (p *Plugin) Name() string                                   { return "wordpress" }
 func (p *Plugin) Description() string                            { return "WordPress Manager (LEMP Stack)" }
-func (p *Plugin) Author() string                                 { return "VPS-Init" }
+func (p *Plugin) Author() string                                 { return "Mellow" }
 func (p *Plugin) Version() string                                { return "0.0.1" }
 func (p *Plugin) Initialize(config map[string]interface{}) error { return nil }
 
@@ -53,9 +55,9 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 		Name:        "wordpress",
 		Description: "WordPress Manager (LEMP Stack)",
 		Version:     "0.0.1",
-		Author:      "VPS-Init",
+		Author:      "Mellow",
 		License:     "MIT",
-		Repository:  "github.com/wasilwamark/vps-init-plugins/wordpress",
+		Repository:  "github.com/wasilwamark/mellow-plugins/wordpress",
 		Tags:        []string{"cms", "wordpress", "php", "web"},
 		Validated:   true,
 		TrustLevel:  "official",
@@ -65,9 +67,9 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 	}
 }
 
-func (p *Plugin) Start(ctx context.Context) error                { return nil }
-func (p *Plugin) Stop(ctx context.Context) error                 { return nil }
-func (p *Plugin) GetRootCommand() *cobra.Command                 { return nil }
+func (p *Plugin) Start(ctx context.Context) error { return nil }
+func (p *Plugin) Stop(ctx context.Context) error  { return nil }
+func (p *Plugin) GetRootCommand() *cobra.Command  { return nil }
 
 func (p *Plugin) GetCommands() []plugin.Command {
 	return []plugin.Command{
@@ -88,14 +90,20 @@ func (p *Plugin) GetCommands() []plugin.Command {
 
 func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	fmt.Println("🐘 Installing PHP and Dependencies...")
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
+	pkgMgr := getPackageManager(conn)
 
 	// Update
-	conn.RunSudo("apt-get update", pass)
+	updateCmd, _ := pkgMgr.Update()
+	conn.RunSudo(updateCmd, pass)
 
 	// Install PHP (and common Extensions), Curl, Unzip
-	pkgs := "php-fpm php-mysql php-curl php-gd php-mbstring php-xml php-xmlrpc php-soap php-intl php-zip unzip curl"
-	if result := conn.RunSudo(fmt.Sprintf("apt-get install -y %s", pkgs), pass); !result.Success {
+	pkgs := []string{"php-fpm", "php-mysql", "php-curl", "php-gd", "php-mbstring", "php-xml", "php-xmlrpc", "php-soap", "php-intl", "php-zip", "unzip", "curl"}
+	installCmd, err := pkgMgr.Install(pkgs...)
+	if err != nil {
+		return err
+	}
+	if result := conn.RunSudo(installCmd, pass); !result.Success {
 		return fmt.Errorf("php install failed: %s", result.Stderr)
 	}
 
@@ -121,7 +129,7 @@ func (p *Plugin) createSiteHandler(ctx context.Context, conn plugin.Connection, 
 		return fmt.Errorf("usage: create-site <domain>")
 	}
 	domain := args[0]
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	// Interactive Wizard
 	fmt.Println("🚀 Standard WordPress Deployment Wizard")
@@ -181,7 +189,8 @@ func (p *Plugin) createSiteHandler(ctx context.Context, conn plugin.Connection, 
 		fmt.Sprintf("mysql -u root -e \"GRANT ALL PRIVILEGES ON %s.* TO '%s'@'localhost'; FLUSH PRIVILEGES;\"", dbName, dbUser),
 	}
 	for _, cmd := range cmds {
-		result := conn.RunSudo(cmd, pass); if !result.Success {
+		result := conn.RunSudo(cmd, pass)
+		if !result.Success {
 			return fmt.Errorf("db step failed: %s", result.Stderr)
 		}
 	}
@@ -252,7 +261,8 @@ func (p *Plugin) createSiteHandler(ctx context.Context, conn plugin.Connection, 
 `, domain, webRoot, phpSock)
 
 	tmpNginx := fmt.Sprintf("/tmp/nginx_%s", domain)
-	err := conn.WriteFile(nginxConf, tmpNginx); if err != nil {
+	err := conn.WriteFile(nginxConf, tmpNginx)
+	if err != nil {
 		return fmt.Errorf("failed to write nginx config: %v", err)
 	}
 
@@ -271,9 +281,14 @@ func (p *Plugin) createSiteHandler(ctx context.Context, conn plugin.Connection, 
 	return nil
 }
 
-func getSudoPass(flags map[string]interface{}) string {
-	if v, ok := flags["sudo-password"]; ok {
+func getPassword(flags map[string]interface{}) string {
+	if v, ok := flags["password"]; ok {
 		return v.(string)
 	}
 	return ""
+}
+
+func getPackageManager(conn plugin.Connection) pkgmgr.PackageManager {
+	distroInfo := conn.GetDistroInfo().(*distro.DistroInfo)
+	return pkgmgr.GetPackageManager(distroInfo)
 }

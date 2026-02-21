@@ -1,14 +1,14 @@
 # Plugin Developer Guide
 
-This document provides a comprehensive guide to understanding the VPS-Init architecture and developing plugins for it.
+This document provides a comprehensive guide to understanding the Mellow architecture and developing plugins for it.
 
 ## 🏗️ Architecture Overview
 
-VPS-Init is built entirely on a **Plugin Architecture**. Even core features like alias management are implemented as plugins.
+Mellow is built entirely on a **Plugin Architecture**. Even core features like alias management are implemented as plugins.
 
 ```
 ┌─────────────────────────────────────────┐
-│              VPS-Init CLI                │
+│              Mellow CLI                │
 │         (No hardcoded commands)         │
 └─────────────┬───────────────────────────┘
               │
@@ -50,7 +50,7 @@ VPS-Init is built entirely on a **Plugin Architecture**. Even core features like
 1.  **CLI Initialization**: The CLI starts and initializes the plugin system.
 2.  **Discovery**:
     *   **Built-in**: Registers plugins compiled into the binary.
-    *   **External**: Scans `~/.vps-init/plugins/` and other paths for `.so` files.
+    *   **External**: Scans `~/.mellow/plugins/` and other paths for `.so` files.
 3.  **Registration**: Plugins are registered in the central `Registry`.
 4.  **Execution**: Commands are dispatched to the appropriate plugin handler.
 
@@ -87,11 +87,11 @@ type Plugin interface {
 
 ## 💻 Developing a Custom Plugin
 
-You can extend VPS-Init by creating your own plugins.
+You can extend Mellow by creating your own plugins.
 
 ### 1. Project Structure
 
-Create a new Go project. You will need to import the `plugin` package from `vps-init`.
+Create a new Go project. You will need to import the `plugin` package from `mellow`.
 
 ```go
 package main
@@ -99,8 +99,8 @@ package main
 import (
     "context"
     "github.com/spf13/cobra"
-    "github.com/wasilwamark/vps-init/pkg/plugin"
-    "github.com/wasilwamark/vps-init-ssh"
+    "github.com/wasilwamark/mellow/pkg/plugin"
+    "github.com/wasilwamark/mellow-ssh"
 )
 
 type MyPlugin struct{}
@@ -159,7 +159,7 @@ func (p *MyPlugin) GetRootCommand() *cobra.Command { return nil }
 
 Go plugins must be built with `-buildmode=plugin`.
 
-**Important**: The plugin must be compiled with the **exact same version** of Go and dependencies as the main `vps-init` binary.
+**Important**: The plugin must be compiled with the **exact same version** of Go and dependencies as the main `mellow` binary.
 
 ```bash
 go build -buildmode=plugin -o my-tool.so main.go
@@ -169,12 +169,12 @@ go build -buildmode=plugin -o my-tool.so main.go
 
 1.  **Create Plugin Directory**:
     ```bash
-    mkdir -p ~/.vps-init/plugins
+    mkdir -p ~/.mellow/plugins
     ```
 2.  **Install**:
     Copy your `.so` file to the plugin directory.
     ```bash
-    cp my-tool.so ~/.vps-init/plugins/
+    cp my-tool.so ~/.mellow/plugins/
     ```
 
 ### 4. Verification
@@ -182,19 +182,19 @@ go build -buildmode=plugin -o my-tool.so main.go
 Run the following to see your plugin listed:
 
 ```bash
-vps-init plugin list
+mellow plugin list
 ```
 
 Usage:
 ```bash
-vps-init <target> my-tool do-something
+mellow <target> my-tool do-something
 ```
 
 ## 📁 Project Directory Structure
 
 ```
-vps-init/
-├── cmd/vps-init/             # CLI entry point
+mellow/
+├── cmd/mellow/             # CLI entry point
 ├── internal/
 │   ├── cli/                  # CLI coordination
 │   ├── services/             # Built-in service plugins (nginx, docker, etc.)

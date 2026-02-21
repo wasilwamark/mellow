@@ -6,8 +6,10 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+
+	"github.com/wasilwamark/mellow/internal/distro"
+	"github.com/wasilwamark/mellow/internal/pkgmgr"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 type Plugin struct{}
@@ -25,9 +27,8 @@ func (p *Plugin) Version() string {
 }
 
 func (p *Plugin) Author() string {
-	return "VPS-Init Team"
+	return "Mellow Team"
 }
-
 
 func (p *Plugin) Initialize(config map[string]interface{}) error {
 	return nil
@@ -62,7 +63,7 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 		Name:        "redis",
 		Description: "Redis database server management",
 		Version:     "1.0.0",
-		Author:      "VPS-Init Team",
+		Author:      "Mellow Team",
 		License:     "MIT",
 		Repository:  "github.com/wasilwamark/vps-redis",
 		Tags:        []string{"database", "cache", "redis"},
@@ -133,7 +134,6 @@ func (p *Plugin) GetRootCommand() *cobra.Command {
 	return nil
 }
 
-
 func (p *Plugin) Start(ctx context.Context) error {
 	return nil
 }
@@ -143,7 +143,7 @@ func (p *Plugin) Stop(ctx context.Context) error {
 }
 
 func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	sudoPass := getSudoPass(flags)
+	sshPass := getPassword(flags)
 
 	fmt.Println("Installing Redis server...")
 
@@ -156,55 +156,66 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 
 	// Update package list
 	fmt.Println("Updating package list...")
-	if result := conn.RunSudo("apt update", sudoPass); !result.Success {
+	pkgMgr := getPackageManager(conn)
+	updateCmd, _ := pkgMgr.Update()
+	if result := conn.RunSudo(updateCmd, sshPass); !result.Success {
 		return fmt.Errorf("failed to update package list: %w", result.GetError())
 	}
 
 	// Install Redis
 	fmt.Println("Installing Redis server...")
-	if result := conn.RunSudo("apt install -y redis-server", sudoPass); !result.Success {
+	installCmd, err := pkgMgr.Install("redis-server")
+	if err != nil {
+		return err
+	}
+	if result := conn.RunSudo(installCmd, sshPass); !result.Success {
 		return fmt.Errorf("failed to install Redis: %w", result.GetError())
 	}
 
 	// Enable Redis service
 	fmt.Println("Enabling Redis service...")
-	if result := conn.RunSudo("systemctl enable redis-server", sudoPass); !result.Success {
+	if result := conn.RunSudo("systemctl enable redis-server", sshPass); !result.Success {
 		return fmt.Errorf("failed to enable Redis service: %w", result.GetError())
 	}
 
 	fmt.Println("✅ Redis server installed successfully!")
 	fmt.Println("You can now:")
-	fmt.Println("  - Start Redis: vps-init redis start")
-	fmt.Println("  - Configure Redis: vps-init redis configure")
-	fmt.Println("  - Check status: vps-init redis status")
+	fmt.Println("  - Start Redis: mellow redis start")
+	fmt.Println("  - Configure Redis: mellow redis configure")
+	fmt.Println("  - Check status: mellow redis status")
 
 	return nil
 }
 
 func (p *Plugin) uninstallHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	sudoPass := getSudoPass(flags)
+	sshPass := getPassword(flags)
 
 	fmt.Println("Uninstalling Redis server...")
 
 	// Stop Redis service
 	fmt.Println("Stopping Redis service...")
-	conn.RunSudo("systemctl stop redis-server", sudoPass)
+	conn.RunSudo("systemctl stop redis-server", sshPass)
 
 	// Disable Redis service
 	fmt.Println("Disabling Redis service...")
-	conn.RunSudo("systemctl disable redis-server", sudoPass)
+	conn.RunSudo("systemctl disable redis-server", sshPass)
 
 	// Remove Redis package
 	fmt.Println("Removing Redis server package...")
-	if result := conn.RunSudo("apt remove --purge -y redis-server redis-tools", sudoPass); !result.Success {
+	pkgMgr := getPackageManager(conn)
+	removeCmd, err := pkgMgr.Remove("redis-server", "redis-tools")
+	if err != nil {
+		return err
+	}
+	if result := conn.RunSudo(removeCmd, sshPass); !result.Success {
 		return fmt.Errorf("failed to remove Redis packages: %w", result.GetError())
 	}
 
 	// Remove Redis configuration and data directories
 	fmt.Println("Removing Redis configuration and data...")
-	conn.RunSudo("rm -rf /etc/redis", sudoPass)
-	conn.RunSudo("rm -rf /var/lib/redis", sudoPass)
-	conn.RunSudo("rm -rf /var/log/redis", sudoPass)
+	conn.RunSudo("rm -rf /etc/redis", sshPass)
+	conn.RunSudo("rm -rf /var/lib/redis", sshPass)
+	conn.RunSudo("rm -rf /var/log/redis", sshPass)
 
 	fmt.Println("✅ Redis server uninstalled successfully!")
 
@@ -212,10 +223,10 @@ func (p *Plugin) uninstallHandler(ctx context.Context, conn plugin.Connection, a
 }
 
 func (p *Plugin) startHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	sudoPass := getSudoPass(flags)
+	sshPass := getPassword(flags)
 
 	fmt.Println("Starting Redis service...")
-	if result := conn.RunSudo("systemctl start redis-server", sudoPass); !result.Success {
+	if result := conn.RunSudo("systemctl start redis-server", sshPass); !result.Success {
 		return fmt.Errorf("failed to start Redis service: %w", result.GetError())
 	}
 
@@ -224,10 +235,10 @@ func (p *Plugin) startHandler(ctx context.Context, conn plugin.Connection, args 
 }
 
 func (p *Plugin) stopHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	sudoPass := getSudoPass(flags)
+	sshPass := getPassword(flags)
 
 	fmt.Println("Stopping Redis service...")
-	if result := conn.RunSudo("systemctl stop redis-server", sudoPass); !result.Success {
+	if result := conn.RunSudo("systemctl stop redis-server", sshPass); !result.Success {
 		return fmt.Errorf("failed to stop Redis service: %w", result.GetError())
 	}
 
@@ -236,10 +247,10 @@ func (p *Plugin) stopHandler(ctx context.Context, conn plugin.Connection, args [
 }
 
 func (p *Plugin) restartHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	sudoPass := getSudoPass(flags)
+	sshPass := getPassword(flags)
 
 	fmt.Println("Restarting Redis service...")
-	if result := conn.RunSudo("systemctl restart redis-server", sudoPass); !result.Success {
+	if result := conn.RunSudo("systemctl restart redis-server", sshPass); !result.Success {
 		return fmt.Errorf("failed to restart Redis service: %w", result.GetError())
 	}
 
@@ -333,7 +344,7 @@ func (p *Plugin) testHandler(ctx context.Context, conn plugin.Connection, args [
 		}
 	} else {
 		fmt.Println("❌ Failed to connect to Redis server")
-		fmt.Println("Make sure Redis is running: vps-init redis start")
+		fmt.Println("Make sure Redis is running: mellow redis start")
 		return fmt.Errorf("Redis server not responding")
 	}
 
@@ -341,21 +352,21 @@ func (p *Plugin) testHandler(ctx context.Context, conn plugin.Connection, args [
 	fmt.Println("\nTesting basic Redis operations...")
 
 	// Test SET operation
-	if result := conn.RunCommand("redis-cli set vps_init_test 'Hello from VPS-Init' 2>/dev/null", plugin.WithHideOutput()); result.Success {
+	if result := conn.RunCommand("redis-cli set mellow_test 'Hello from Mellow' 2>/dev/null", plugin.WithHideOutput()); result.Success {
 		fmt.Println("✅ SET operation successful")
 	} else {
 		fmt.Printf("❌ SET operation failed\n")
 	}
 
 	// Test GET operation
-	if result := conn.RunCommand("redis-cli get vps_init_test 2>/dev/null", plugin.WithHideOutput()); result.Success {
+	if result := conn.RunCommand("redis-cli get mellow_test 2>/dev/null", plugin.WithHideOutput()); result.Success {
 		fmt.Printf("✅ GET operation successful: %s\n", strings.TrimSpace(result.Stdout))
 	} else {
 		fmt.Printf("❌ GET operation failed\n")
 	}
 
 	// Clean up test key
-	conn.RunCommand("redis-cli del vps_init_test 2>/dev/null", plugin.WithHideOutput())
+	conn.RunCommand("redis-cli del mellow_test 2>/dev/null", plugin.WithHideOutput())
 
 	// Show Redis info
 	fmt.Println("\nRedis Server Information:")
@@ -417,14 +428,14 @@ func (p *Plugin) infoHandler(ctx context.Context, conn plugin.Connection, args [
 }
 
 func (p *Plugin) backupHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	sudoPass := getSudoPass(flags)
+	sshPass := getPassword(flags)
 
 	fmt.Println("Creating Redis backup...")
 
 	// Create backup directory
 	backupDir := "/var/backups/redis"
 	fmt.Printf("Creating backup directory: %s\n", backupDir)
-	if result := conn.RunSudo(fmt.Sprintf("mkdir -p %s", backupDir), sudoPass); !result.Success {
+	if result := conn.RunSudo(fmt.Sprintf("mkdir -p %s", backupDir), sshPass); !result.Success {
 		return fmt.Errorf("failed to create backup directory: %w", result.GetError())
 	}
 
@@ -458,13 +469,13 @@ func (p *Plugin) backupHandler(ctx context.Context, conn plugin.Connection, args
 	// Copy the RDB file to backup location
 	rdbPath := "/var/lib/redis/dump.rdb"
 	copyCmd := fmt.Sprintf("sudo cp %s %s", rdbPath, backupFile)
-	if result := conn.RunSudo(copyCmd, sudoPass); !result.Success {
+	if result := conn.RunSudo(copyCmd, sshPass); !result.Success {
 		return fmt.Errorf("failed to copy RDB file: %w", result.GetError())
 	}
 
 	// Set proper permissions
 	chmodCmd := fmt.Sprintf("sudo chmod 640 %s", backupFile)
-	if result := conn.RunSudo(chmodCmd, sudoPass); !result.Success {
+	if result := conn.RunSudo(chmodCmd, sshPass); !result.Success {
 		return fmt.Errorf("failed to set backup file permissions: %w", result.GetError())
 	}
 
@@ -478,9 +489,14 @@ func (p *Plugin) backupHandler(ctx context.Context, conn plugin.Connection, args
 }
 
 // Helper function to get sudo password from flags
-func getSudoPass(flags map[string]interface{}) string {
+func getPassword(flags map[string]interface{}) string {
 	if pass, ok := flags["sudo_password"].(string); ok {
 		return pass
 	}
 	return ""
+}
+
+func getPackageManager(conn plugin.Connection) pkgmgr.PackageManager {
+	distroInfo := conn.GetDistroInfo().(*distro.DistroInfo)
+	return pkgmgr.GetPackageManager(distroInfo)
 }

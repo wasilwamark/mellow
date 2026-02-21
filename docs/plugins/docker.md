@@ -5,7 +5,7 @@ The **Docker** plugin provides a streamlined way to install and manage Docker an
 ## Usage
 
 ```bash
-vps-init <target> docker <command> [args]
+mellow <target> docker <command> [args]
 ```
 
 ## Commands
@@ -26,12 +26,12 @@ Manage your multi-container applications easily.
 
 *   `up [args...]`:
     *   Runs `docker compose up -d [args]`.
-    *   Example: `vps-init prod docker up --build`
+    *   Example: `mellow prod docker up --build`
 *   `down`: Stops and removes containers (`docker compose down`).
 *   `pull`: Pulls latest images (`docker compose pull`).
 *   `compose [args...]`:
     *   Pass raw commands to `docker compose`.
-    *   Example: `vps-init prod docker compose restart app`
+    *   Example: `mellow prod docker compose restart app`
 
 ### Container Management
 
@@ -49,30 +49,30 @@ Manage your multi-container applications easily.
 
 ```bash
 # Install Docker
-vps-init myserver docker install
+mellow myserver docker install
 
 # Verify it works
-vps-init myserver docker verify
+mellow myserver docker verify
 ```
 
 **2. Deploying a project:**
 
 ```bash
 # SSH in to clone your repo first (or use git plugin later)
-vps-init myserver ssh
+mellow myserver ssh
 git clone ...
 exit
 
 # Start it up
-vps-init myserver docker up --build
+mellow myserver docker up --build
 ```
 
 **3. Monitoring:**
 
 ```bash
 # Check running containers
-vps-init myserver docker ps
+mellow myserver docker ps
 
 # Watch logs
-vps-init myserver docker logs
+mellow myserver docker logs
 ```

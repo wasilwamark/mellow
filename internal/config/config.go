@@ -16,7 +16,7 @@ type Config struct {
 
 func New() *Config {
 	homeDir, _ := os.UserHomeDir()
-	configDir := filepath.Join(homeDir, ".vps-init")
+	configDir := filepath.Join(homeDir, ".mellow")
 
 	cfg := &Config{
 		configDir: configDir,

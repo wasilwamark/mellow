@@ -7,15 +7,17 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+
+	"github.com/wasilwamark/mellow/internal/distro"
+	"github.com/wasilwamark/mellow/internal/pkgmgr"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 type Plugin struct{}
 
 func (p *Plugin) Name() string                                   { return "restic" }
 func (p *Plugin) Description() string                            { return "Restic Backup Manager (S3)" }
-func (p *Plugin) Author() string                                 { return "VPS-Init" }
+func (p *Plugin) Author() string                                 { return "Mellow" }
 func (p *Plugin) Version() string                                { return "0.0.1" }
 func (p *Plugin) Initialize(config map[string]interface{}) error { return nil }
 
@@ -43,9 +45,9 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 		Name:        "restic",
 		Description: "Restic Backup Manager (S3)",
 		Version:     "0.0.1",
-		Author:      "VPS-Init",
+		Author:      "Mellow",
 		License:     "MIT",
-		Repository:  "github.com/wasilwamark/vps-init-plugins/restic",
+		Repository:  "github.com/wasilwamark/mellow-plugins/restic",
 		Tags:        []string{"backup", "storage", "s3", "restic"},
 		Validated:   true,
 		TrustLevel:  "official",
@@ -55,9 +57,9 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 	}
 }
 
-func (p *Plugin) Start(ctx context.Context) error                { return nil }
-func (p *Plugin) Stop(ctx context.Context) error                 { return nil }
-func (p *Plugin) GetRootCommand() *cobra.Command                 { return nil }
+func (p *Plugin) Start(ctx context.Context) error { return nil }
+func (p *Plugin) Stop(ctx context.Context) error  { return nil }
+func (p *Plugin) GetRootCommand() *cobra.Command  { return nil }
 
 func (p *Plugin) GetCommands() []plugin.Command {
 	return []plugin.Command{
@@ -98,15 +100,29 @@ func (p *Plugin) GetCommands() []plugin.Command {
 
 func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	fmt.Println("💾 Installing Restic...")
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
+	pkgMgr := getPackageManager(conn)
 
 	// Update
-	result := conn.RunSudo("apt-get update", pass); if !result.Success {
-		return fmt.Errorf("apt update failed: %s", result.Stderr)
+	updateCmd, _ := pkgMgr.Update()
+	result := conn.RunSudo(updateCmd, pass)
+	if !result.Success {
+		return fmt.Errorf("package update failed: %s", result.Stderr)
 	}
 
 	// Install
-	result = conn.RunSudo("apt-get install -y restic", pass); if !result.Success {
+	installCmd, err := pkgMgr.Install("restic")
+	if err != nil {
+		return err
+	}
+	result = conn.RunSudo(installCmd, pass)
+	if !result.Success {
+		return fmt.Errorf("installation failed: %s", result.Stderr)
+	}
+
+	// Install
+	result = conn.RunSudo("apt-get install -y restic", pass)
+	if !result.Success {
 		return fmt.Errorf("installation failed: %s", result.Stderr)
 	}
 
@@ -116,7 +132,7 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 
 func (p *Plugin) initHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	fmt.Println("⚙️  Initializing Repository Configuration...")
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	// Interactive Input
 	var repo, id, key, password string
@@ -160,21 +176,22 @@ export AWS_SECRET_ACCESS_KEY="%s"
 export RESTIC_PASSWORD="%s"
 `, repo, id, key, password)
 
-	conn.RunSudo("mkdir -p /etc/vps-init", pass)
+	conn.RunSudo("mkdir -p /etc/mellow", pass)
 	if err := conn.WriteFile(envContent, "/tmp/restic.env"); err != nil {
 		return fmt.Errorf("failed to write restic env file: %w", err)
 	}
-	conn.RunSudo("mv /tmp/restic.env /etc/vps-init/restic.env", pass)
-	conn.RunSudo("chmod 600 /etc/vps-init/restic.env", pass)
+	conn.RunSudo("mv /tmp/restic.env /etc/mellow/restic.env", pass)
+	conn.RunSudo("chmod 600 /etc/mellow/restic.env", pass)
 
-	fmt.Println("🔒 Credentials saved to /etc/vps-init/restic.env")
+	fmt.Println("🔒 Credentials saved to /etc/mellow/restic.env")
 
 	// Initialize Repo
-	cmd := "bash -c 'source /etc/vps-init/restic.env && restic init'"
-	// We run directly as root? or standard user? standard user might not read /etc/vps-init/restic.env if 600 root
+	cmd := "bash -c 'source /etc/mellow/restic.env && restic init'"
+	// We run directly as root? or standard user? standard user might not read /etc/mellow/restic.env if 600 root
 	// Let's run as root for now since backups usually need root to read all files
 	fmt.Println("🚀 Initializing backend...")
-	result := conn.RunSudo(cmd, pass); if !result.Success {
+	result := conn.RunSudo(cmd, pass)
+	if !result.Success {
 		if strings.Contains(result.Stderr, "config file already exists") || strings.Contains(result.Stdout, "already initialized") {
 			fmt.Println("⚠️  Repository already initialized.")
 		} else {
@@ -190,7 +207,7 @@ export RESTIC_PASSWORD="%s"
 // Database Discovery Logic
 
 func (p *Plugin) backupDbHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	// 1. Discover Database Instances (Host Services & Docker Containers)
 	fmt.Println("🔍 Scanning for database instances...")
@@ -285,7 +302,7 @@ func (p *Plugin) backupDbHandler(ctx context.Context, conn plugin.Connection, ar
 	return p.performBackup(conn, targetInfo, pass)
 }
 
-func (p *Plugin) performBackup(conn plugin.Connection, targetDB DatabaseInfo, sudoPass string) error {
+func (p *Plugin) performBackup(conn plugin.Connection, targetDB DatabaseInfo, sshPass string) error {
 	fmt.Printf("📦 Streaming backup of %s (%s)...\n", targetDB.Name, targetDB.Engine)
 
 	var dumpCmd string
@@ -336,9 +353,10 @@ func (p *Plugin) performBackup(conn plugin.Connection, targetDB DatabaseInfo, su
 	}
 
 	// Pipe to Restic
-	fullCmd := fmt.Sprintf("bash -c 'source /etc/vps-init/restic.env && %s | restic backup --stdin --stdin-filename %s.%s'", dumpCmd, targetDB.Name, ext)
+	fullCmd := fmt.Sprintf("bash -c 'source /etc/mellow/restic.env && %s | restic backup --stdin --stdin-filename %s.%s'", dumpCmd, targetDB.Name, ext)
 
-	result := conn.RunSudo(fullCmd, sudoPass); if !result.Success {
+	result := conn.RunSudo(fullCmd, sshPass)
+	if !result.Success {
 		return fmt.Errorf("backup failed: %s", result.Stderr)
 	}
 
@@ -366,7 +384,7 @@ type DatabaseInfo struct {
 
 // Discovery Logic
 
-func discoverInstances(conn plugin.Connection, sudoPass string) ([]DatabaseInstance, error) {
+func discoverInstances(conn plugin.Connection, sshPass string) ([]DatabaseInstance, error) {
 	var inst []DatabaseInstance
 
 	// 1. Host Services
@@ -382,7 +400,7 @@ func discoverInstances(conn plugin.Connection, sudoPass string) ([]DatabaseInsta
 
 	// 2. Docker Services
 	if conn.RunCommand("which docker", plugin.WithHideOutput()).Success {
-		result := conn.RunSudo("docker ps --format '{{.ID}}|{{.Names}}|{{.Image}}'", sudoPass)
+		result := conn.RunSudo("docker ps --format '{{.ID}}|{{.Names}}|{{.Image}}'", sshPass)
 		if result.Success {
 			lines := strings.Split(strings.TrimSpace(result.Stdout), "\n")
 			for _, line := range lines {
@@ -408,7 +426,7 @@ func discoverInstances(conn plugin.Connection, sudoPass string) ([]DatabaseInsta
 	return inst, nil
 }
 
-func detectCredentials(conn plugin.Connection, inst DatabaseInstance, sudoPass string) (string, string) {
+func detectCredentials(conn plugin.Connection, inst DatabaseInstance, sshPass string) (string, string) {
 	user := "root"
 	pass := ""
 
@@ -422,16 +440,16 @@ func detectCredentials(conn plugin.Connection, inst DatabaseInstance, sudoPass s
 	if inst.Type == "docker" {
 		// Try to extract from Env
 		if inst.Engine == "mysql" {
-			pass, _ = getDockerEnv(conn, inst.ContainerID, sudoPass, []string{"MYSQL_ROOT_PASSWORD", "MARIADB_ROOT_PASSWORD"})
+			pass, _ = getDockerEnv(conn, inst.ContainerID, sshPass, []string{"MYSQL_ROOT_PASSWORD", "MARIADB_ROOT_PASSWORD"})
 		} else if inst.Engine == "postgres" {
-			pass, _ = getDockerEnv(conn, inst.ContainerID, sudoPass, []string{"POSTGRES_PASSWORD"})
-			u, _ := getDockerEnv(conn, inst.ContainerID, sudoPass, []string{"POSTGRES_USER"})
+			pass, _ = getDockerEnv(conn, inst.ContainerID, sshPass, []string{"POSTGRES_PASSWORD"})
+			u, _ := getDockerEnv(conn, inst.ContainerID, sshPass, []string{"POSTGRES_USER"})
 			if u != "" {
 				user = u
 			}
 		} else if inst.Engine == "mongo" {
-			pass, _ = getDockerEnv(conn, inst.ContainerID, sudoPass, []string{"MONGO_INITDB_ROOT_PASSWORD"})
-			u, _ := getDockerEnv(conn, inst.ContainerID, sudoPass, []string{"MONGO_INITDB_ROOT_USERNAME"})
+			pass, _ = getDockerEnv(conn, inst.ContainerID, sshPass, []string{"MONGO_INITDB_ROOT_PASSWORD"})
+			u, _ := getDockerEnv(conn, inst.ContainerID, sshPass, []string{"MONGO_INITDB_ROOT_USERNAME"})
 			if u != "" {
 				user = u
 			}
@@ -441,7 +459,7 @@ func detectCredentials(conn plugin.Connection, inst DatabaseInstance, sudoPass s
 	return user, pass
 }
 
-func listDatabases(conn plugin.Connection, inst DatabaseInstance, user, pass, sudoPass string) ([]string, error) {
+func listDatabases(conn plugin.Connection, inst DatabaseInstance, user, pass, sshPass string) ([]string, error) {
 	var dbs []string
 	var cmd string
 
@@ -493,13 +511,13 @@ func listDatabases(conn plugin.Connection, inst DatabaseInstance, user, pass, su
 		}
 	}
 
-	result := conn.RunSudo(cmd, sudoPass)
+	result := conn.RunSudo(cmd, sshPass)
 
 	// Fallback for mongo if mongosh fails
 	if inst.Engine == "mongo" && !result.Success {
 		if strings.Contains(cmd, "mongosh") {
 			cmd = strings.ReplaceAll(cmd, "mongosh", "mongo")
-			result = conn.RunSudo(cmd, sudoPass)
+			result = conn.RunSudo(cmd, sshPass)
 		}
 	}
 
@@ -519,9 +537,9 @@ func listDatabases(conn plugin.Connection, inst DatabaseInstance, user, pass, su
 
 // Helpers
 
-func getDockerEnv(conn plugin.Connection, id, sudoPass string, keys []string) (string, error) {
+func getDockerEnv(conn plugin.Connection, id, sshPass string, keys []string) (string, error) {
 	inspectCmd := fmt.Sprintf("docker inspect %s --format '{{range .Config.Env}}{{println .}}{{end}}'", id)
-	result := conn.RunSudo(inspectCmd, sudoPass)
+	result := conn.RunSudo(inspectCmd, sshPass)
 	if !result.Success {
 		return "", fmt.Errorf("inspect failed")
 	}
@@ -546,11 +564,11 @@ func isSystemDB(name string) bool {
 }
 
 func (p *Plugin) restoreDbHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	// 1. List Snapshots
 	fmt.Println("📋 Fetching available snapshots...")
-	cmd := "bash -c 'source /etc/vps-init/restic.env && restic snapshots --json'"
+	cmd := "bash -c 'source /etc/mellow/restic.env && restic snapshots --json'"
 	result := conn.RunSudo(cmd, pass)
 	if !result.Success {
 		return fmt.Errorf("failed to list snapshots: %s", result.Stderr)
@@ -684,23 +702,23 @@ func (p *Plugin) restoreDbHandler(ctx context.Context, conn plugin.Connection, a
 			passFlag = fmt.Sprintf("-p'%s'", dbPass)
 		}
 		if targetInst.Type == "docker" {
-			restoreCmd = fmt.Sprintf("bash -c 'source /etc/vps-init/restic.env && restic dump %s %s | docker exec -i %s mysql -u %s %s %s'",
+			restoreCmd = fmt.Sprintf("bash -c 'source /etc/mellow/restic.env && restic dump %s %s | docker exec -i %s mysql -u %s %s %s'",
 				selectedSnap.ID, filename, targetInst.ContainerID, user, passFlag, dbName)
 		} else {
-			restoreCmd = fmt.Sprintf("bash -c 'source /etc/vps-init/restic.env && restic dump %s %s | mysql -u %s %s %s'",
+			restoreCmd = fmt.Sprintf("bash -c 'source /etc/mellow/restic.env && restic dump %s %s | mysql -u %s %s %s'",
 				selectedSnap.ID, filename, user, passFlag, dbName)
 		}
 
 	case "postgres":
 		if targetInst.Type == "docker" {
-			restoreCmd = fmt.Sprintf("bash -c 'source /etc/vps-init/restic.env && restic dump %s %s | docker exec -i -e PGPASSWORD='%s' %s psql -U %s %s'",
+			restoreCmd = fmt.Sprintf("bash -c 'source /etc/mellow/restic.env && restic dump %s %s | docker exec -i -e PGPASSWORD='%s' %s psql -U %s %s'",
 				selectedSnap.ID, filename, dbPass, targetInst.ContainerID, user, dbName)
 		} else {
 			env := ""
 			if dbPass != "" {
 				env = fmt.Sprintf("PGPASSWORD='%s' ", dbPass)
 			}
-			restoreCmd = fmt.Sprintf("bash -c 'source /etc/vps-init/restic.env && %srestic dump %s %s | psql -U %s %s'",
+			restoreCmd = fmt.Sprintf("bash -c 'source /etc/mellow/restic.env && %srestic dump %s %s | psql -U %s %s'",
 				env, selectedSnap.ID, filename, user, dbName)
 		}
 
@@ -710,15 +728,16 @@ func (p *Plugin) restoreDbHandler(ctx context.Context, conn plugin.Connection, a
 			auth = fmt.Sprintf("--username %s --password '%s' --authenticationDatabase admin", user, dbPass)
 		}
 		if targetInst.Type == "docker" {
-			restoreCmd = fmt.Sprintf("bash -c 'source /etc/vps-init/restic.env && restic dump %s %s | docker exec -i %s mongorestore %s --archive'",
+			restoreCmd = fmt.Sprintf("bash -c 'source /etc/mellow/restic.env && restic dump %s %s | docker exec -i %s mongorestore %s --archive'",
 				selectedSnap.ID, filename, targetInst.ContainerID, auth)
 		} else {
-			restoreCmd = fmt.Sprintf("bash -c 'source /etc/vps-init/restic.env && restic dump %s %s | mongorestore %s --archive'",
+			restoreCmd = fmt.Sprintf("bash -c 'source /etc/mellow/restic.env && restic dump %s %s | mongorestore %s --archive'",
 				selectedSnap.ID, filename, auth)
 		}
 	}
 
-	result = conn.RunSudo(restoreCmd, pass); if !result.Success {
+	result = conn.RunSudo(restoreCmd, pass)
+	if !result.Success {
 		return fmt.Errorf("restore failed: %s", result.Stderr)
 	}
 
@@ -727,18 +746,23 @@ func (p *Plugin) restoreDbHandler(ctx context.Context, conn plugin.Connection, a
 }
 
 func (p *Plugin) snapshotsHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	conn.RunInteractive("sudo bash -c 'source /etc/vps-init/restic.env && restic snapshots'")
+	conn.RunInteractive("sudo bash -c 'source /etc/mellow/restic.env && restic snapshots'")
 	return nil
 }
 
 func (p *Plugin) unlockHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	conn.RunInteractive("sudo bash -c 'source /etc/vps-init/restic.env && restic unlock'")
+	conn.RunInteractive("sudo bash -c 'source /etc/mellow/restic.env && restic unlock'")
 	return nil
 }
 
-func getSudoPass(flags map[string]interface{}) string {
-	if v, ok := flags["sudo-password"]; ok {
+func getPassword(flags map[string]interface{}) string {
+	if v, ok := flags["password"]; ok {
 		return v.(string)
 	}
 	return ""
+}
+
+func getPackageManager(conn plugin.Connection) pkgmgr.PackageManager {
+	distroInfo := conn.GetDistroInfo().(*distro.DistroInfo)
+	return pkgmgr.GetPackageManager(distroInfo)
 }

@@ -1,12 +1,12 @@
 # Keycloak Setup Guide
 
-This guide provides step-by-step instructions for setting up Keycloak identity and access management using VPS-Init.
+This guide provides step-by-step instructions for setting up Keycloak identity and access management using Mellow.
 
 ## Prerequisites
 
 Before installing Keycloak, ensure you have:
 
-1. **VPS-Init Installed**: Follow the main README installation instructions
+1. **Mellow Installed**: Follow the main README installation instructions
 2. **Server Access**: SSH access to an Ubuntu/Debian server
 3. **Domain Name**: (Recommended for production) A domain name pointing to your server
 4. **Basic Dependencies**: Docker and Nginx (will be installed automatically)
@@ -17,34 +17,34 @@ Before installing Keycloak, ensure you have:
 
 ```bash
 # Add your server with sudo password
-vps-init alias add myserver user@your-server-ip --sudo-password 'your-sudo-password'
+mellow alias add myserver user@your-server-ip --password 'your-sudo-password'
 ```
 
 ### 2. Install Dependencies
 
 ```bash
 # Install Docker and Docker Compose
-vps-init myserver docker install
+mellow myserver docker install
 
 # Install Nginx
-vps-init myserver nginx install
+mellow myserver nginx install
 ```
 
 ### 3. Install Keycloak
 
 ```bash
 # Basic installation (uses keycloak.local)
-vps-init myserver keycloak install
+mellow myserver keycloak install
 
 # Or with custom domain
-vps-init myserver keycloak install sso.yourdomain.com
+mellow myserver keycloak install sso.yourdomain.com
 ```
 
 ### 4. Configure SSL (Production)
 
 ```bash
 # Install SSL certificate
-vps-init myserver keycloak ssl sso.yourdomain.com
+mellow myserver keycloak ssl sso.yourdomain.com
 ```
 
 ### 5. Access Keycloak
@@ -61,28 +61,28 @@ Ensure your server meets the requirements:
 
 ```bash
 # Check system resources (minimum 2GB RAM recommended)
-vps-init myserver system status
+mellow myserver system status
 
 # Update system packages
-vps-init myserver system update
+mellow myserver system update
 ```
 
 ### Step 2: Install Dependencies
 
-VPS-Init will handle all dependencies automatically:
+Mellow will handle all dependencies automatically:
 
 ```bash
 # Install Docker Engine and Docker Compose
-vps-init myserver docker install
+mellow myserver docker install
 
 # Verify Docker installation
-vps-init myserver docker status
+mellow myserver docker status
 
 # Install Nginx for reverse proxy
-vps-init myserver nginx install
+mellow myserver nginx install
 
 # Verify Nginx installation
-vps-init myserver nginx status
+mellow myserver nginx status
 ```
 
 ### Step 3: Install Keycloak
@@ -91,7 +91,7 @@ vps-init myserver nginx status
 
 ```bash
 # Install with default domain (keycloak.local)
-vps-init myserver keycloak install
+mellow myserver keycloak install
 ```
 
 This creates:
@@ -104,20 +104,20 @@ This creates:
 
 ```bash
 # Install with your domain
-vps-init myserver keycloak install sso.yourdomain.com
+mellow myserver keycloak install sso.yourdomain.com
 ```
 
 ### Step 4: Verify Installation
 
 ```bash
 # Check Keycloak service status
-vps-init myserver keycloak status
+mellow myserver keycloak status
 
 # View service logs
-vps-init myserver keycloak logs
+mellow myserver keycloak logs
 
 # Check Docker containers
-vps-init myserver docker ps
+mellow myserver docker ps
 ```
 
 ### Step 5: Configure DNS
@@ -132,7 +132,7 @@ A    sso.yourdomain.com    YOUR_SERVER_IP
 
 ```bash
 # Install SSL certificate using Let's Encrypt
-vps-init myserver keycloak ssl sso.yourdomain.com
+mellow myserver keycloak ssl sso.yourdomain.com
 ```
 
 This will:
@@ -170,7 +170,7 @@ The file contains:
 
 ```bash
 # Interactive password change
-vps-init myserver keycloak configure
+mellow myserver keycloak configure
 
 # Or directly using Keycloak admin CLI
 ssh your-server "cd /opt/keycloak && docker-compose exec keycloak /opt/keycloak/bin/kcadm.sh update users/$(docker-compose exec -T keycloak /opt/keycloak/bin/kcadm.sh get users -r master -q username=admin --fields id --config /opt/keycloak/conf/keycloak-cli.properties | grep -o '\"id\":\"[^\"]*\"' | cut -d'\"' -f4) -r master -s 'credentials=[{\"type\":\"password\",\"value\":\"NEW_PASSWORD\",\"temporary\":false}]' --config /opt/keycloak/conf/keycloak-cli.properties"
@@ -187,20 +187,20 @@ ssh your-server "cd /opt/keycloak && docker-compose exec keycloak /opt/keycloak/
 
 ```bash
 # Start Keycloak services
-vps-init myserver keycloak start
+mellow myserver keycloak start
 
 # Stop Keycloak services
-vps-init myserver keycloak stop
+mellow myserver keycloak stop
 
 # Restart Keycloak services
-vps-init myserver keycloak restart
+mellow myserver keycloak restart
 
 # Check service health
-vps-init myserver keycloak status
+mellow myserver keycloak status
 
 # View logs
-vps-init myserver keycloak logs
-vps-init myserver keycloak logs keycloak-db
+mellow myserver keycloak logs
+mellow myserver keycloak logs keycloak-db
 ```
 
 ## Production Setup
@@ -237,7 +237,7 @@ deploy:
 
 ```bash
 # Create backup
-vps-init myserver keycloak backup
+mellow myserver keycloak backup
 
 # Setup automated backups (daily at 2 AM)
 ssh your-server << 'EOF'
@@ -261,12 +261,12 @@ EOF
 
 1. **Create Application Realm**:
    ```bash
-   vps-init myserver keycloak realm create my-apps
+   mellow myserver keycloak realm create my-apps
    ```
 
 2. **Create OAuth Client**:
    ```bash
-   vps-init myserver keycloak client create web-app my-apps
+   mellow myserver keycloak client create web-app my-apps
    ```
 
 3. **Configure Your Application**:
@@ -305,16 +305,16 @@ environment:
 
 ```bash
 # Check service status
-vps-init myserver keycloak status
+mellow myserver keycloak status
 
 # View logs for errors
-vps-init myserver keycloak logs keycloak
+mellow myserver keycloak logs keycloak
 
 # Check Docker containers
-vps-init myserver docker ps -a
+mellow myserver docker ps -a
 
 # Restart services
-vps-init myserver keycloak restart
+mellow myserver keycloak restart
 ```
 
 #### SSL Certificate Issues
@@ -337,20 +337,20 @@ ssh your-server "certbot renew --dry-run"
 
 ```bash
 # Check database container
-vps-init myserver docker logs keycloak-db
+mellow myserver docker logs keycloak-db
 
 # Test database connectivity
 ssh your-server "docker exec -it keycloak-db psql -U keycloak -d keycloak -c 'SELECT 1'"
 
 # Check database logs
-vps-init myserver keycloak logs keycloak-db
+mellow myserver keycloak logs keycloak-db
 ```
 
 #### Performance Issues
 
 ```bash
 # Check resource usage
-vps-init myserver keycloak status
+mellow myserver keycloak status
 
 # Monitor Docker stats
 ssh your-server "docker stats"
@@ -359,7 +359,7 @@ ssh your-server "docker stats"
 ssh your-server "free -h && df -h && top"
 
 # Check application logs for errors
-vps-init myserver keycloak logs
+mellow myserver keycloak logs
 ```
 
 ### Getting Help
@@ -370,7 +370,7 @@ For additional support:
 2. **Verify Configuration**: Ensure all settings are correct
 3. **Test Dependencies**: Verify Docker, Nginx, and PostgreSQL are working
 4. **Community**: Refer to Keycloak official documentation
-5. **Issues**: Report bugs or issues to VPS-Init repository
+5. **Issues**: Report bugs or issues to Mellow repository
 
 ## Migration Guide
 
@@ -384,7 +384,7 @@ For additional support:
 
 2. **Install New Keycloak**:
    ```bash
-   vps-init myserver keycloak install sso.yourdomain.com
+   mellow myserver keycloak install sso.yourdomain.com
    ```
 
 3. **Import Configuration**:
@@ -397,13 +397,13 @@ For additional support:
 
 ```bash
 # Create backup of old installation
-vps-init oldserver keycloak backup
+mellow oldserver keycloak backup
 
 # Transfer backup to new server
 scp user@oldserver:/var/backups/keycloak/keycloak_backup_*.tar.gz ./
 
 # Restore on new server
-vps-init newserver keycloak restore ./keycloak_backup_*.tar.gz
+mellow newserver keycloak restore ./keycloak_backup_*.tar.gz
 ```
 
 ## Best Practices
@@ -432,4 +432,4 @@ vps-init newserver keycloak restore ./keycloak_backup_*.tar.gz
 4. **Documentation**: Keep configuration documented
 5. **Testing**: Test disaster recovery procedures
 
-This setup guide should help you successfully deploy and manage Keycloak using VPS-Init. For more advanced configurations, refer to the Keycloak plugin documentation and official Keycloak documentation.
+This setup guide should help you successfully deploy and manage Keycloak using Mellow. For more advanced configurations, refer to the Keycloak plugin documentation and official Keycloak documentation.

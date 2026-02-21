@@ -8,15 +8,17 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+
+	"github.com/wasilwamark/mellow/internal/distro"
+	"github.com/wasilwamark/mellow/internal/pkgmgr"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 type Plugin struct{}
 
 func (p *Plugin) Name() string                                   { return "wireguard" }
 func (p *Plugin) Description() string                            { return "Wireguard VPN Server" }
-func (p *Plugin) Author() string                                 { return "VPS-Init" }
+func (p *Plugin) Author() string                                 { return "Mellow" }
 func (p *Plugin) Version() string                                { return "0.0.1" }
 func (p *Plugin) Initialize(config map[string]interface{}) error { return nil }
 func (p *Plugin) Start(ctx context.Context) error                { return nil }
@@ -47,9 +49,9 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 		Name:        "wireguard",
 		Description: "Wireguard VPN Server",
 		Version:     "0.0.1",
-		Author:      "VPS-Init",
+		Author:      "Mellow",
 		License:     "MIT",
-		Repository:  "github.com/wasilwamark/vps-init-plugins/wireguard",
+		Repository:  "github.com/wasilwamark/mellow-plugins/wireguard",
 		Tags:        []string{"vpn", "networking", "security", "wireguard"},
 		Validated:   true,
 		TrustLevel:  "official",
@@ -81,7 +83,7 @@ func (p *Plugin) GetCommands() []plugin.Command {
 			Description: "Remove a peer",
 			Handler:     p.removePeerHandler,
 		},
-				{
+		{
 			Name:        "status",
 			Description: "Show Wireguard status",
 			Handler:     p.statusHandler,
@@ -103,16 +105,23 @@ func (p *Plugin) GetCommands() []plugin.Command {
 
 func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	fmt.Println("🛡️  Installing Wireguard & Tools...")
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
+	pkgMgr := getPackageManager(conn)
 
 	// Update first
-	result := conn.RunSudo("apt-get update", pass); if !result.Success {
-		return fmt.Errorf("apt update failed: %s", result.Stderr)
+	updateCmd, _ := pkgMgr.Update()
+	result := conn.RunSudo(updateCmd, pass)
+	if !result.Success {
+		return fmt.Errorf("package update failed: %s", result.Stderr)
 	}
 
 	// Install packages: wireguard, wireguard-tools, qrencode (for QR display)
-	pkgs := "wireguard wireguard-tools qrencode iptables"
-	if result = conn.RunSudo(fmt.Sprintf("apt-get install -y %s", pkgs), pass); !result.Success {
+	pkgs := []string{"wireguard", "wireguard-tools", "qrencode", "iptables"}
+	installCmd, err := pkgMgr.Install(pkgs...)
+	if err != nil {
+		return err
+	}
+	if result = conn.RunSudo(installCmd, pass); !result.Success {
 		return fmt.Errorf("installation failed: %s", result.Stderr)
 	}
 
@@ -122,7 +131,7 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 
 func (p *Plugin) setupHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	fmt.Println("⚙️  Setting up Wireguard Server...")
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	// 1. Generate Server Keys
 	privKey, pubKey, err := generateKeys(conn)
@@ -156,7 +165,12 @@ PrivateKey = %s
 	// Write Config
 	tmpPath := "/tmp/wg0.conf"
 	if err := conn.WriteFile(config, tmpPath); err != nil {
-		return fmt.Errorf("failed to write tmp config")
+		// Try home directory as fallback
+		homeTmpPath := "$HOME/wg0.conf"
+		if err := conn.WriteFile(config, homeTmpPath); err != nil {
+			return fmt.Errorf("failed to write tmp config")
+		}
+		tmpPath = homeTmpPath
 	}
 
 	// Move to /etc/wireguard/
@@ -176,10 +190,12 @@ PrivateKey = %s
 	conn.RunSudo(fmt.Sprintf("ufw allow %s/udp", port), pass)
 
 	// 6. Start Service
-	result := conn.RunSudo("systemctl enable wg-quick@wg0", pass); if !result.Success {
+	result := conn.RunSudo("systemctl enable wg-quick@wg0", pass)
+	if !result.Success {
 		return fmt.Errorf("failed to enable service: %s", result.Stderr)
 	}
-	result = conn.RunSudo("systemctl start wg-quick@wg0", pass); if !result.Success {
+	result = conn.RunSudo("systemctl start wg-quick@wg0", pass)
+	if !result.Success {
 		return fmt.Errorf("failed to start service: %s", result.Stderr)
 	}
 
@@ -192,7 +208,7 @@ func (p *Plugin) addPeerHandler(ctx context.Context, conn plugin.Connection, arg
 		return fmt.Errorf("usage: add-peer <name> [--email=email@example.com] [--smtp-host=smtp.gmail.com:587] [--smtp-user=user] [--smtp-pass=password] [--smtp-from=from@example.com]")
 	}
 	name := args[0]
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	// Get optional email parameter
 	email := ""
@@ -252,11 +268,11 @@ func (p *Plugin) addPeerHandler(ctx context.Context, conn plugin.Connection, arg
 
 	// Get Server Endpoint (Public IP)
 	// Try to guess or use host
-	// Try to get the public IP from the server
-	result = conn.RunCommand("curl -s ifconfig.me || curl -s ipinfo.io/ip || echo 'YOUR_SERVER_IP'", plugin.WithHideOutput())
+	// Try to get the public IPv4 IP from the server
+	result = conn.RunCommand("curl -4 -s ifconfig.me || curl -4 -s ipinfo.io/ip || curl -4 -s icanhazip.com || echo 'YOUR_SERVER_IP'", plugin.WithHideOutput())
 	endpoint := fmt.Sprintf("%s:51820", strings.TrimSpace(result.Stdout))
 	if result.Stdout == "" || strings.Contains(result.Stdout, "YOUR_SERVER_IP") {
-		fmt.Println("⚠️  Could not auto-detect server IP. Please manually set the Endpoint in the client config.")
+		fmt.Println("⚠️  Could not auto-detect server IPv4 IP. Please manually set the Endpoint in the client config.")
 		endpoint = "YOUR_SERVER_IP:51820"
 	}
 
@@ -337,7 +353,12 @@ func (p *Plugin) addPeerHandler(ctx context.Context, conn plugin.Connection, arg
 		newConfigStr := strings.Join(newConfig, "\n")
 		tmpConfig := "/tmp/wg0_with_all_names.conf"
 		if err := conn.WriteFile(newConfigStr, tmpConfig); err != nil {
-			return fmt.Errorf("failed to write updated config: %w", err)
+			// Try home directory as fallback
+			homeTmpConfig := "$HOME/wg0_with_all_names.conf"
+			if err := conn.WriteFile(newConfigStr, homeTmpConfig); err != nil {
+				return fmt.Errorf("failed to write updated config: %w", err)
+			}
+			tmpConfig = homeTmpConfig
 		}
 
 		// Replace the config file
@@ -380,7 +401,12 @@ PersistentKeepalive = 25
 	// Write to tmp file then qrencode
 	tmpClient := fmt.Sprintf("/tmp/%s.conf", name)
 	if err := conn.WriteFile(clientConfig, tmpClient); err != nil {
-		return fmt.Errorf("failed to write client config: %w", err)
+		// Try home directory as fallback
+		homeTmpClient := fmt.Sprintf("$HOME/%s.conf", name)
+		if err := conn.WriteFile(clientConfig, homeTmpClient); err != nil {
+			return fmt.Errorf("failed to write client config: %w", err)
+		}
+		tmpClient = homeTmpClient
 	}
 	conn.RunInteractive(fmt.Sprintf("qrencode -t ansiutf8 < %s", tmpClient))
 
@@ -401,7 +427,7 @@ PersistentKeepalive = 25
 }
 
 func (p *Plugin) removePeerHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	// Get the config file to list peers
 	configRes := conn.RunSudo("cat /etc/wireguard/wg0.conf", pass)
@@ -523,7 +549,7 @@ func (p *Plugin) removePeerHandler(ctx context.Context, conn plugin.Connection, 
 			// Check if this is the peer to remove by looking for its public key
 			isTargetPeer := false
 			// Look ahead for the PublicKey
-			for j := i + 1; j < len(lines) && j < i + 10; j++ {
+			for j := i + 1; j < len(lines) && j < i+10; j++ {
 				nextLine := strings.TrimSpace(lines[j])
 				if strings.HasPrefix(nextLine, "PublicKey =") {
 					parts := strings.SplitN(nextLine, "=", 2)
@@ -575,10 +601,59 @@ func (p *Plugin) removePeerHandler(ctx context.Context, conn plugin.Connection, 
 
 	// Write new config
 	newConfigStr := strings.Join(newConfig, "\n")
-	tmpPath := "/tmp/wg0_new.conf"
-	if err := conn.WriteFile(newConfigStr, tmpPath); err != nil {
-		return fmt.Errorf("failed to write new config")
+
+	// Debug: print what we're about to write
+	fmt.Printf("🐛 Debug: Generated config length: %d\n", len(newConfigStr))
+	if len(newConfigStr) == 0 {
+		return fmt.Errorf("generated empty config - this shouldn't happen")
 	}
+
+	// Show first few lines for debugging
+	debugLines := strings.Split(newConfigStr, "\n")
+	fmt.Printf("🐛 Debug: First 3 lines of new config:\n")
+	for i, line := range debugLines {
+		if i >= 3 {
+			break
+		}
+		fmt.Printf("   %d: %s\n", i, line)
+	}
+
+	// Try to write to user's home directory first, then move with sudo
+	tmpPath := "/tmp/wg0_new.conf"
+	fmt.Printf("🐛 Debug: Writing config to %s\n", tmpPath)
+	fmt.Printf("🐛 Debug: About to write content of length %d\n", len(newConfigStr))
+
+	// First try normal write to /tmp
+	if err := conn.WriteFile(newConfigStr, tmpPath); err != nil {
+		fmt.Printf("🐛 Debug: Normal WriteFile failed: %v\n", err)
+
+		// Try writing to home directory instead
+		homeTmpPath := "$HOME/wg0_new.conf"
+		fmt.Printf("🐛 Debug: Trying to write to home directory: %s\n", homeTmpPath)
+
+		if err := conn.WriteFile(newConfigStr, homeTmpPath); err != nil {
+			fmt.Printf("🐛 Debug: Home directory WriteFile also failed: %v\n", err)
+
+			// Last resort: use sudo to write directly
+			fmt.Printf("🐛 Debug: Trying sudo write method...\n")
+			escapedContent := strings.ReplaceAll(newConfigStr, "'", "'\"'\"'")
+			sudoWriteCmd := fmt.Sprintf("echo '%s' | sudo tee %s > /dev/null", escapedContent, tmpPath)
+			result := conn.RunSudo(sudoWriteCmd, pass)
+			if !result.Success {
+				fmt.Printf("🐛 Debug: Sudo write failed: %s\n", result.Stderr)
+				return fmt.Errorf("failed to write new config (all methods): %w", err)
+			}
+			fmt.Printf("🐛 Debug: Sudo write succeeded!\n")
+		} else {
+			// If home directory worked, move it with sudo
+			fmt.Printf("🐛 Debug: Home directory write succeeded, moving with sudo...\n")
+			result := conn.RunSudo(fmt.Sprintf("mv %s %s", homeTmpPath, tmpPath), pass)
+			if !result.Success {
+				return fmt.Errorf("failed to move config from home: %s", result.Stderr)
+			}
+		}
+	}
+	fmt.Printf("🐛 Debug: Config file written successfully\n")
 
 	// Backup and replace config
 	backupPath := fmt.Sprintf("/etc/wireguard/wg0.conf.bak.%d", time.Now().Unix())
@@ -602,7 +677,6 @@ func (p *Plugin) removePeerHandler(ctx context.Context, conn plugin.Connection, 
 	return nil
 }
 
-
 func (p *Plugin) statusHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	fmt.Println("🔌 Wireguard Service Status:")
 	conn.RunInteractive("systemctl status wg-quick@wg0")
@@ -611,7 +685,7 @@ func (p *Plugin) statusHandler(ctx context.Context, conn plugin.Connection, args
 }
 
 func (p *Plugin) listPeersHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	fmt.Println("🔌 WireGuard Peers Overview")
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
@@ -677,18 +751,18 @@ func (p *Plugin) listPeersHandler(ctx context.Context, conn plugin.Connection, a
 	// Get active peers from wg show
 	activeRes := conn.RunSudo("wg show wg0", pass)
 	var activePeers map[string]struct {
-		endpoint    string
-		allowedIps  string
+		endpoint        string
+		allowedIps      string
 		latestHandshake string
-		transferRx  string
-		transferTx  string
+		transferRx      string
+		transferTx      string
 	}
 	activePeers = make(map[string]struct {
-		endpoint    string
-		allowedIps  string
+		endpoint        string
+		allowedIps      string
 		latestHandshake string
-		transferRx  string
-		transferTx  string
+		transferRx      string
+		transferTx      string
 	})
 
 	if activeRes.Success {
@@ -703,11 +777,11 @@ func (p *Plugin) listPeersHandler(ctx context.Context, conn plugin.Connection, a
 				if len(parts) >= 2 {
 					currentPeer = parts[1]
 					activePeers[currentPeer] = struct {
-						endpoint    string
-						allowedIps  string
+						endpoint        string
+						allowedIps      string
 						latestHandshake string
-						transferRx  string
-						transferTx  string
+						transferRx      string
+						transferTx      string
 					}{}
 				}
 			} else if currentPeer != "" {
@@ -809,7 +883,7 @@ func (p *Plugin) listPeersHandler(ctx context.Context, conn plugin.Connection, a
 
 func (p *Plugin) restartHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	fmt.Println("🔄 Restarting Wireguard service...")
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	// Restart the service
 	result := conn.RunSudo("systemctl restart wg-quick@wg0", pass)
@@ -893,7 +967,7 @@ For security, please keep this configuration file safe and do not share it with 
 The private key is included in the configuration file above.
 
 Best regards,
-VPS-Init WireGuard Plugin
+Mellow WireGuard Plugin
 `, name, clientAddr, endpoint, cPub, clientConfig, name, name)
 
 	// Send email
@@ -929,9 +1003,14 @@ func getSMTPFlag(flags map[string]interface{}, key, defaultValue string) string 
 	return defaultValue
 }
 
-func getSudoPass(flags map[string]interface{}) string {
-	if v, ok := flags["sudo-password"]; ok {
+func getPassword(flags map[string]interface{}) string {
+	if v, ok := flags["password"]; ok {
 		return v.(string)
 	}
 	return ""
+}
+
+func getPackageManager(conn plugin.Connection) pkgmgr.PackageManager {
+	distroInfo := conn.GetDistroInfo().(*distro.DistroInfo)
+	return pkgmgr.GetPackageManager(distroInfo)
 }
