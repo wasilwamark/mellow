@@ -103,4 +103,9 @@ go.work
 # plugins
 mellow-core
 mellow-ssh
+<<<<<<< HEAD
 mellow-keycloak~/.mellow/cache/
+=======
+mellow-keycloak
+.mellow/cache/
+>>>>>>> 7f98f99 (release: v0.0.6)
