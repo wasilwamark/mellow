@@ -47,8 +47,8 @@ type Dependency struct {
 
 // Compatibility defines plugin compatibility requirements
 type Compatibility struct {
-	MinVPSInitVersion string   `json:"min_vps_init_version"`
-	MaxVPSInitVersion string   `json:"max_vps_init_version,omitempty"`
+	MinVPSInitVersion string   `json:"min_mellow_version"`
+	MaxVPSInitVersion string   `json:"max_mellow_version,omitempty"`
 	GoVersion         string   `json:"go_version,omitempty"`
 	Platforms         []string `json:"platforms,omitempty"` // e.g., ["linux/amd64", "linux/arm64"]
 	Tags              []string `json:"tags,omitempty"`
@@ -132,7 +132,7 @@ type BuildInfo struct {
 	Dependencies []string `json:"dependencies,omitempty"`
 }
 
-// Connection interface for SSH connections (enhanced with all methods from vps-init-ssh)
+// Connection interface for SSH connections (enhanced with all methods from mellow-ssh)
 type Connection interface {
 	// Basic operations
 	RunCommand(cmd string, sudo bool) Result
@@ -141,7 +141,7 @@ type Connection interface {
 	DownloadFile(remotePath, localPath string) error
 	Close() error
 
-	// Enhanced SSH operations (from vps-init-ssh)
+	// Enhanced SSH operations (from mellow-ssh)
 	Connect() bool
 	Disconnect()
 	Reconnect() error
@@ -203,7 +203,7 @@ type Result struct {
 // GetError returns the error from the result
 func (r *Result) GetError() error {
 	if !r.Success && r.Error != "" {
-		return fmt.Errorf(r.Error)
+		return fmt.Errorf("%s", r.Error)
 	}
 	return nil
 }

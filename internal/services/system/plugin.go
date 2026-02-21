@@ -7,9 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/wasilwamark/vps-init/internal/distro"
-	"github.com/wasilwamark/vps-init/internal/pkgmgr"
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+	"github.com/wasilwamark/mellow/internal/distro"
+	"github.com/wasilwamark/mellow/internal/pkgmgr"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 // Plugin implements the system upgrade plugin
@@ -35,7 +35,7 @@ func (p *Plugin) Version() string {
 }
 
 func (p *Plugin) Author() string {
-	return "VPS-Init Team"
+	return "Mellow Team"
 }
 
 // Enhanced plugin interface methods
@@ -66,7 +66,7 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 		Version:     p.Version(),
 		Author:      p.Author(),
 		License:     "MIT",
-		Repository:  "github.com/wasilwamark/vps-init-plugins/" + p.Name(),
+		Repository:  "github.com/wasilwamark/mellow-plugins/" + p.Name(),
 		Tags:        []string{"TODO", "add", "tags"},
 		Validated:   true,
 		TrustLevel:  "official",
@@ -123,7 +123,7 @@ func (p *Plugin) GetCommands() []plugin.Command {
 
 func (p *Plugin) GetRootCommand() *cobra.Command {
 	// Return nil to prevent system from appearing as a top-level command
-	// system should only be accessible via the plugin system: vps-init user@host system <command>
+	// system should only be accessible via the plugin system: mellow user@host system <command>
 	return nil
 }
 
@@ -154,13 +154,13 @@ func (p *Plugin) checkSudoResult(result plugin.Result, flags map[string]interfac
 			errMsg += "\n\n❌ Root privileges required.\n"
 			errMsg += "Resolution Tips:\n"
 			errMsg += "1. Set environment variable: export SSH_SUDO_PWD_<ALIAS>='your-password'\n"
-			errMsg += "2. OR Update alias with password: vps-init alias add <name> <user@host> --sudo-password 'pass' (will update existing)\n"
+			errMsg += "2. OR Update alias with password: mellow alias add <name> <user@host> --sudo-password 'pass' (will update existing)\n"
 		} else {
 			errMsg += "\n\n❌ Sudo authentication failed. Check your password."
 		}
 	}
 
-	return fmt.Errorf(errMsg)
+	return fmt.Errorf("%s", errMsg)
 }
 
 // Helper to get package manager for connection

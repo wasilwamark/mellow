@@ -20,10 +20,10 @@ Redis is an open-source, in-memory data structure store used as a database, cach
 
 ```bash
 # Install Redis server
-vps-init redis install
+mellow redis install
 
 # Install with custom sudo password
-vps-init redis install --sudo-password=your_password
+mellow redis install --sudo-password=your_password
 ```
 
 The plugin will:
@@ -38,23 +38,23 @@ The plugin will:
 
 ```bash
 # Start Redis service
-vps-init redis start
+mellow redis start
 
 # Stop Redis service
-vps-init redis stop
+mellow redis stop
 
 # Restart Redis service
-vps-init redis restart
+mellow redis restart
 
 # Check service status
-vps-init redis status
+mellow redis status
 ```
 
 ### Configuration
 
 ```bash
 # Interactive configuration
-vps-init redis configure
+mellow redis configure
 ```
 
 The configuration wizard allows you to:
@@ -67,17 +67,17 @@ The configuration wizard allows you to:
 
 ```bash
 # Test Redis connection and basic operations
-vps-init redis test
+mellow redis test
 
 # Show detailed server information
-vps-init redis info
+mellow redis info
 ```
 
 ### Backup Management
 
 ```bash
 # Create Redis data backup
-vps-init redis backup
+mellow redis backup
 ```
 
 Backups are stored in `/var/backups/redis/` with timestamp-based filenames.
@@ -86,7 +86,7 @@ Backups are stored in `/var/backups/redis/` with timestamp-based filenames.
 
 ```bash
 # Remove Redis server completely
-vps-init redis uninstall
+mellow redis uninstall
 ```
 
 This will:
@@ -109,29 +109,29 @@ Redis configuration is stored at `/etc/redis/redis.conf`. The plugin creates aut
 ### Basic Setup
 ```bash
 # Install Redis
-vps-init redis install
+mellow redis install
 
 # Start the service
-vps-init redis start
+mellow redis start
 
 # Test connection
-vps-init redis test
+mellow redis test
 
 # Configure for production
-vps-init redis configure
+mellow redis configure
 ```
 
 ### Production Deployment
 ```bash
 # Install with security settings
-vps-init redis install
-vps-init redis configure  # Set password and bind to localhost
+mellow redis install
+mellow redis configure  # Set password and bind to localhost
 
 # Create backup schedule
-vps-init redis backup
+mellow redis backup
 
 # Monitor performance
-vps-init redis info
+mellow redis info
 ```
 
 ## Dependencies
@@ -163,7 +163,7 @@ Redis is commonly used with:
 **Service won't start:**
 ```bash
 # Check status for detailed error
-vps-init redis status
+mellow redis status
 
 # Check configuration syntax
 redis-cli config get "*"
@@ -181,10 +181,10 @@ sudo ufw status
 **High memory usage:**
 ```bash
 # Check memory usage
-vps-init redis info
+mellow redis info
 
 # Configure maxmemory limit
-vps-init redis configure
+mellow redis configure
 ```
 
 ### Log Files
@@ -209,10 +209,10 @@ vps-init redis configure
 ### Regular Tasks
 ```bash
 # Daily status check
-vps-init redis status
+mellow redis status
 
 # Weekly backup
-vps-init redis backup
+mellow redis backup
 
 # Monthly cleanup
 redis-cli FLUSHDB  # Clear cache data
@@ -229,7 +229,7 @@ The plugin provides built-in health monitoring:
 
 - **Name**: redis
 - **Version**: 1.0.0
-- **Author**: VPS-Init Team
+- **Author**: Mellow Team
 - **License**: MIT
 - **Tags**: database, cache, redis, production-ready
 - **Platforms**: linux/amd64, linux/arm64
@@ -240,7 +240,7 @@ For issues specific to Redis:
 - [Redis Documentation](https://redis.io/documentation)
 - [Redis Community](https://redis.io/community)
 
-For VPS-Init plugin issues:
-- Check plugin logs with `vps-init redis status`
-- Validate plugin with `vps-init plugin validate`
+For Mellow plugin issues:
+- Check plugin logs with `mellow redis status`
+- Validate plugin with `mellow plugin validate`
 - Review system logs for detailed error messages

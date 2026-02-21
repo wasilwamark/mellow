@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/testcontainers/testcontainers-go"
-	"github.com/wasilwamark/vps-init/tests/integration/helpers"
+	"github.com/wasilwamark/mellow/tests/integration/helpers"
 )
 
 func (s *TestSuite) SetupTestContainer(fixture ContainerFixture) error {

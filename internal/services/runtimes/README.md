@@ -19,66 +19,66 @@ The Language Runtime plugin provides a unified interface for managing programmin
 
 ```bash
 # Install Node.js version 18
-vps-init <server> runtime install node 18
+mellow <server> runtime install node 18
 
 # Install Python 3.11
-vps-init <server> runtime install python 3.11
+mellow <server> runtime install python 3.11
 
 # Install Go 1.21
-vps-init <server> runtime install go 1.21
+mellow <server> runtime install go 1.21
 
 # Install Java 17
-vps-init <server> runtime install java 17
+mellow <server> runtime install java 17
 
 # Install Rust
-vps-init <server> runtime install rust latest
+mellow <server> runtime install rust latest
 
 # Install PHP 8.2
-vps-init <server> runtime install php 8.2
+mellow <server> runtime install php 8.2
 
 # Install Ruby 3.2
-vps-init <server> runtime install ruby 3.2
+mellow <server> runtime install ruby 3.2
 
 # Install .NET 7
-vps-init <server> runtime install dotnet 7
+mellow <server> runtime install dotnet 7
 ```
 
 ### List Installed Runtime
 
 ```bash
-vps-init <server> runtime list
+mellow <server> runtime list
 ```
 
 ### Switch Between Versions
 
 ```bash
 # Switch to Node.js 16
-vps-init <server> runtime use node 16
+mellow <server> runtime use node 16
 
 # Switch to Python 3.10
-vps-init <server> runtime use python 3.10
+mellow <server> runtime use python 3.10
 ```
 
 ### Show Current Status
 
 ```bash
-vps-init <server> runtime status
+mellow <server> runtime status
 ```
 
 ### Remove a Runtime Version
 
 ```bash
 # Remove Node.js 14
-vps-init <server> runtime remove node 14
+mellow <server> runtime remove node 14
 
 # Remove Python 3.9
-vps-init <server> runtime remove python 3.9
+mellow <server> runtime remove python 3.9
 ```
 
 ### Update Version Managers
 
 ```bash
-vps-init <server> runtime update
+mellow <server> runtime update
 ```
 
 ## Features
@@ -112,42 +112,42 @@ The plugin can:
 
 ```bash
 # Install Node.js 18 with NVM
-vps-init myserver runtime install node 18
+mellow myserver runtime install node 18
 
 # Switch to Node.js 16 for a legacy project
-vps-init myserver runtime use node 16
+mellow myserver runtime use node 16
 
 # Check current status
-vps-init myserver runtime status
+mellow myserver runtime status
 ```
 
 ### Setting up a Python Environment
 
 ```bash
 # Install Python 3.11 with uv
-vps-init myserver runtime install python 3.11
+mellow myserver runtime install python 3.11
 
 # List available Python versions
-vps-init myserver runtime list
+mellow myserver runtime list
 
 # Install additional packages if needed (using uv)
-vps-init myserver system cmd "uv pip install virtualenv"
+mellow myserver system cmd "uv pip install virtualenv"
 
 # Or use uv run for project-specific commands
-vps-init myserver system cmd "uv run python -m venv myenv"
+mellow myserver system cmd "uv run python -m venv myenv"
 ```
 
 ### Multi-Language Setup
 
 ```bash
 # Install multiple language runtime
-vps-init myserver runtime install node 18
-vps-init myserver runtime install python 3.11
-vps-init myserver runtime install go 1.21
-vps-init myserver runtime install java 17
+mellow myserver runtime install node 18
+mellow myserver runtime install python 3.11
+mellow myserver runtime install go 1.21
+mellow myserver runtime install java 17
 
 # Check all installed runtime
-vps-init myserver runtime status
+mellow myserver runtime status
 ```
 
 ## Dependencies

@@ -7,9 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/wasilwamark/vps-init/internal/distro"
-	"github.com/wasilwamark/vps-init/internal/pkgmgr"
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+	"github.com/wasilwamark/mellow/internal/distro"
+	"github.com/wasilwamark/mellow/internal/pkgmgr"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 type Plugin struct{}
@@ -27,7 +27,7 @@ func (p *Plugin) Version() string {
 }
 
 func (p *Plugin) Author() string {
-	return "VPS-Init Team"
+	return "Mellow Team"
 }
 
 func (p *Plugin) Initialize(config map[string]interface{}) error {
@@ -63,7 +63,7 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 		Name:        "redis",
 		Description: "Redis database server management",
 		Version:     "1.0.0",
-		Author:      "VPS-Init Team",
+		Author:      "Mellow Team",
 		License:     "MIT",
 		Repository:  "github.com/wasilwamark/vps-redis",
 		Tags:        []string{"database", "cache", "redis"},
@@ -180,9 +180,9 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 
 	fmt.Println("✅ Redis server installed successfully!")
 	fmt.Println("You can now:")
-	fmt.Println("  - Start Redis: vps-init redis start")
-	fmt.Println("  - Configure Redis: vps-init redis configure")
-	fmt.Println("  - Check status: vps-init redis status")
+	fmt.Println("  - Start Redis: mellow redis start")
+	fmt.Println("  - Configure Redis: mellow redis configure")
+	fmt.Println("  - Check status: mellow redis status")
 
 	return nil
 }
@@ -344,7 +344,7 @@ func (p *Plugin) testHandler(ctx context.Context, conn plugin.Connection, args [
 		}
 	} else {
 		fmt.Println("❌ Failed to connect to Redis server")
-		fmt.Println("Make sure Redis is running: vps-init redis start")
+		fmt.Println("Make sure Redis is running: mellow redis start")
 		return fmt.Errorf("Redis server not responding")
 	}
 
@@ -352,21 +352,21 @@ func (p *Plugin) testHandler(ctx context.Context, conn plugin.Connection, args [
 	fmt.Println("\nTesting basic Redis operations...")
 
 	// Test SET operation
-	if result := conn.RunCommand("redis-cli set vps_init_test 'Hello from VPS-Init' 2>/dev/null", plugin.WithHideOutput()); result.Success {
+	if result := conn.RunCommand("redis-cli set mellow_test 'Hello from Mellow' 2>/dev/null", plugin.WithHideOutput()); result.Success {
 		fmt.Println("✅ SET operation successful")
 	} else {
 		fmt.Printf("❌ SET operation failed\n")
 	}
 
 	// Test GET operation
-	if result := conn.RunCommand("redis-cli get vps_init_test 2>/dev/null", plugin.WithHideOutput()); result.Success {
+	if result := conn.RunCommand("redis-cli get mellow_test 2>/dev/null", plugin.WithHideOutput()); result.Success {
 		fmt.Printf("✅ GET operation successful: %s\n", strings.TrimSpace(result.Stdout))
 	} else {
 		fmt.Printf("❌ GET operation failed\n")
 	}
 
 	// Clean up test key
-	conn.RunCommand("redis-cli del vps_init_test 2>/dev/null", plugin.WithHideOutput())
+	conn.RunCommand("redis-cli del mellow_test 2>/dev/null", plugin.WithHideOutput())
 
 	// Show Redis info
 	fmt.Println("\nRedis Server Information:")

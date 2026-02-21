@@ -7,9 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/wasilwamark/vps-init/internal/distro"
-	"github.com/wasilwamark/vps-init/internal/pkgmgr"
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+	"github.com/wasilwamark/mellow/internal/distro"
+	"github.com/wasilwamark/mellow/internal/pkgmgr"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 type Plugin struct{}
@@ -27,7 +27,7 @@ func (p *Plugin) Version() string {
 }
 
 func (p *Plugin) Author() string {
-	return "VPS-Init Team"
+	return "Mellow Team"
 }
 
 func (p *Plugin) Initialize(config map[string]interface{}) error {
@@ -64,9 +64,9 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 		Name:        "firewall",
 		Description: "Firewall management using UFW (Uncomplicated Firewall)",
 		Version:     "1.0.0",
-		Author:      "VPS-Init Team",
+		Author:      "Mellow Team",
 		License:     "MIT",
-		Repository:  "github.com/wasilwamark/vps-init-plugins/firewall",
+		Repository:  "github.com/wasilwamark/mellow-plugins/firewall",
 		Tags:        []string{"security", "networking", "firewall", "ufw"},
 		Validated:   true,
 		TrustLevel:  "official",
@@ -303,7 +303,7 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 	}
 
 	fmt.Println("✅ UFW firewall installed and configured")
-	fmt.Println("📝 Note: Run 'vps-init firewall enable' to activate the firewall")
+	fmt.Println("📝 Note: Run 'mellow firewall enable' to activate the firewall")
 	fmt.Println("⚠️  WARNING: Make sure SSH is allowed before enabling the firewall!")
 
 	return nil
@@ -394,7 +394,7 @@ func (p *Plugin) statusHandler(ctx context.Context, conn plugin.Connection, args
 	// Check if UFW is installed
 	if result := conn.RunCommand("which ufw", plugin.WithHideOutput()); !result.Success {
 		fmt.Println("❌ UFW is not installed")
-		fmt.Println("   Run 'vps-init firewall install' to install UFW")
+		fmt.Println("   Run 'mellow firewall install' to install UFW")
 		return nil
 	}
 

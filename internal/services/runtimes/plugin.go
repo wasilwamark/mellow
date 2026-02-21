@@ -7,9 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/wasilwamark/vps-init/internal/distro"
-	"github.com/wasilwamark/vps-init/internal/pkgmgr"
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+	"github.com/wasilwamark/mellow/internal/distro"
+	"github.com/wasilwamark/mellow/internal/pkgmgr"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 type Plugin struct{}
@@ -38,7 +38,7 @@ func (p *Plugin) Description() string {
 }
 
 func (p *Plugin) Author() string {
-	return "VPS-Init"
+	return "Mellow"
 }
 
 func (p *Plugin) Version() string {
@@ -89,7 +89,7 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 		Version:     p.Version(),
 		Author:      p.Author(),
 		License:     "MIT",
-		Repository:  "github.com/wasilwamark/vps-init-plugins/" + p.Name(),
+		Repository:  "github.com/wasilwamark/mellow-plugins/" + p.Name(),
 		Tags:        []string{"TODO", "add", "tags"},
 		Validated:   true,
 		TrustLevel:  "official",

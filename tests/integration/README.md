@@ -1,6 +1,6 @@
 # Integration Tests
 
-This directory contains integration tests for vps-init using testcontainers-go to provision Docker containers for each supported Linux distribution.
+This directory contains integration tests for mellow using testcontainers-go to provision Docker containers for each supported Linux distribution.
 
 ## Directory Structure
 
@@ -272,4 +272,4 @@ Tests run on:
 
 - [testcontainers-go Documentation](https://golang.testcontainers.org/)
 - [testcontainers-go Examples](https://golang.testcontainers.org/examples/)
-- [vps-init Documentation](../../README.md)
+- [mellow Documentation](../../README.md)

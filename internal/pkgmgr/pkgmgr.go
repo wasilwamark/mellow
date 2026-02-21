@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/wasilwamark/vps-init/internal/distro"
+	"github.com/wasilwamark/mellow/internal/distro"
 )
 
 type PackageManager interface {

@@ -2,27 +2,27 @@
 
 # Install to system (build and install globally)
 install:
-	@echo "Building vps-init..."
-	go build -o /tmp/vps-init ./cmd/vps-init
+	@echo "Building mellow..."
+	go build -o /tmp/mellow ./cmd/mellow
 	@echo "Installing to /usr/local/bin..."
-	sudo cp /tmp/vps-init /usr/local/bin/vps-init && sudo chmod +x /usr/local/bin/vps-init
-	@rm -f /tmp/vps-init
-	@echo "✅ Installation complete! Run: vps-init --help"
+	sudo cp /tmp/mellow /usr/local/bin/mellow && sudo chmod +x /usr/local/bin/mellow
+	@rm -f /tmp/mellow
+	@echo "✅ Installation complete! Run: mellow --help"
 
 # Build for multiple platforms
 build-all:
 	@echo "Building for multiple platforms..."
-	GOOS=linux GOARCH=amd64 go build -o vps-init-linux-amd64 ./cmd/vps-init
-	GOOS=linux GOARCH=arm64 go build -o vps-init-linux-arm64 ./cmd/vps-init
-	GOOS=darwin GOARCH=amd64 go build -o vps-init-darwin-amd64 ./cmd/vps-init
-	GOOS=darwin GOARCH=arm64 go build -o vps-init-darwin-arm64 ./cmd/vps-init
-	GOOS=windows GOARCH=amd64 go build -o vps-init-windows-amd64.exe ./cmd/vps-init
+	GOOS=linux GOARCH=amd64 go build -o mellow-linux-amd64 ./cmd/mellow
+	GOOS=linux GOARCH=arm64 go build -o mellow-linux-arm64 ./cmd/mellow
+	GOOS=darwin GOARCH=amd64 go build -o mellow-darwin-amd64 ./cmd/mellow
+	GOOS=darwin GOARCH=arm64 go build -o mellow-darwin-arm64 ./cmd/mellow
+	GOOS=windows GOARCH=amd64 go build -o mellow-windows-amd64.exe ./cmd/mellow
 	@echo "All builds completed"
 
 # Clean build artifacts
 clean:
 	@echo "Cleaning..."
-	@rm -rf bin/ /tmp/vps-init 2>/dev/null || true
+	@rm -rf bin/ /tmp/mellow 2>/dev/null || true
 
 # Run tests
 test:

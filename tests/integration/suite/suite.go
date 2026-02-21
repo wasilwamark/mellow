@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/wasilwamark/vps-init/tests/integration/helpers"
+	"github.com/wasilwamark/mellow/tests/integration/helpers"
 )
 
 type TestSuite struct {

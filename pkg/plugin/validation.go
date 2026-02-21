@@ -206,7 +206,7 @@ func (v *Validator) validateCompatibility(plugin Plugin) ValidationErrors {
 
 	compat := plugin.Compatibility()
 
-	// Validate VPS-Init version compatibility
+	// Validate Mellow version compatibility
 	if compat.MinVPSInitVersion != "" {
 		currentVersion, err := semver.NewVersion(v.vpsInitVersion)
 		if err != nil {
@@ -217,21 +217,21 @@ func (v *Validator) validateCompatibility(plugin Plugin) ValidationErrors {
 		minVersion, err := semver.NewConstraint(compat.MinVPSInitVersion)
 		if err != nil {
 			errors = append(errors, ValidationError{
-				Field:   "compatibility.min_vps_init_version",
-				Message: fmt.Sprintf("invalid minimum VPS-Init version constraint: %v", err),
+				Field:   "compatibility.min_mellow_version",
+				Message: fmt.Sprintf("invalid minimum Mellow version constraint: %v", err),
 				Code:    "INVALID_MIN_VERSION",
 			})
 		} else if !minVersion.Check(currentVersion) {
 			errors = append(errors, ValidationError{
 				Field:   "compatibility",
-				Message: fmt.Sprintf("plugin requires VPS-Init version %s, but current version is %s",
+				Message: fmt.Sprintf("plugin requires Mellow version %s, but current version is %s",
 					compat.MinVPSInitVersion, v.vpsInitVersion),
-				Code:    "INCOMPATIBLE_VPS_INIT_VERSION",
+				Code:    "INCOMPATIBLE_MELLOW_VERSION",
 			})
 		}
 	}
 
-	// Validate maximum VPS-Init version if specified
+	// Validate maximum Mellow version if specified
 	if compat.MaxVPSInitVersion != "" {
 		currentVersion, err := semver.NewVersion(v.vpsInitVersion)
 		if err != nil {
@@ -241,16 +241,16 @@ func (v *Validator) validateCompatibility(plugin Plugin) ValidationErrors {
 		maxVersion, err := semver.NewConstraint("<=" + compat.MaxVPSInitVersion)
 		if err != nil {
 			errors = append(errors, ValidationError{
-				Field:   "compatibility.max_vps_init_version",
-				Message: fmt.Sprintf("invalid maximum VPS-Init version constraint: %v", err),
+				Field:   "compatibility.max_mellow_version",
+				Message: fmt.Sprintf("invalid maximum Mellow version constraint: %v", err),
 				Code:    "INVALID_MAX_VERSION",
 			})
 		} else if !maxVersion.Check(currentVersion) {
 			errors = append(errors, ValidationError{
 				Field:   "compatibility",
-				Message: fmt.Sprintf("plugin requires VPS-Init version <= %s, but current version is %s",
+				Message: fmt.Sprintf("plugin requires Mellow version <= %s, but current version is %s",
 					compat.MaxVPSInitVersion, v.vpsInitVersion),
-				Code:    "INCOMPATIBLE_VPS_INIT_VERSION",
+				Code:    "INCOMPATIBLE_MELLOW_VERSION",
 			})
 		}
 	}
@@ -433,8 +433,8 @@ func GetTrustLevel(metadata PluginMetadata) string {
 	*/
 
 	// Auto-determine trust level based on repository
-	if strings.Contains(metadata.Repository, "github.com/vps-init") ||
-		strings.Contains(metadata.Repository, "github.com/wasilwamark/vps-init") {
+	if strings.Contains(metadata.Repository, "github.com/mellow") ||
+		strings.Contains(metadata.Repository, "github.com/wasilwamark/mellow") {
 		return "official"
 	}
 

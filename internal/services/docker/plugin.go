@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 	
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 type Plugin struct{}
@@ -21,7 +21,7 @@ func (p *Plugin) Description() string {
 }
 
 func (p *Plugin) Author() string {
-	return "VPS-Init"
+	return "Mellow"
 }
 
 func (p *Plugin) Version() string {
@@ -73,7 +73,7 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 		Version:     p.Version(),
 		Author:      p.Author(),
 		License:     "MIT",
-		Repository:  "github.com/wasilwamark/vps-init-plugins/" + p.Name(),
+		Repository:  "github.com/wasilwamark/mellow-plugins/" + p.Name(),
 		Tags:        []string{"TODO", "add", "tags"},
 		Validated:   true,
 		TrustLevel:  "official",
@@ -193,7 +193,7 @@ func (p *Plugin) simpleDockerHandler(subcmd string) plugin.CommandHandler {
 
 func (p *Plugin) simpleComposeHandler(subcmd string) plugin.CommandHandler {
 	return func(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-		// Allow passing extra args e.g. vps-init alias docker up --build
+		// Allow passing extra args e.g. mellow alias docker up --build
 		argsStr := strings.Join(args, " ")
 		cmd := fmt.Sprintf("docker compose %s %s", subcmd, argsStr)
 		// Trim space in case argsStr is empty

@@ -7,9 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wasilwamark/vps-init/internal/distro"
-	"github.com/wasilwamark/vps-init/internal/pkgmgr"
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
@@ -36,7 +34,7 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 
 	// Check Docker
 	if result := conn.RunCommand("docker --version", plugin.WithHideOutput()); !result.Success {
-		return fmt.Errorf("Docker is not installed. Please install Docker first: vps-init docker install")
+		return fmt.Errorf("Docker is not installed. Please install Docker first: mellow docker install")
 	}
 
 	// Check Docker Compose
@@ -145,7 +143,7 @@ Installation Date: %s
 	fmt.Printf("🔑 Admin Credentials saved to: %s\n", credentialsFile)
 	fmt.Printf("\n⚠️  Important:\n")
 	fmt.Printf("- Store the admin password securely\n")
-	fmt.Printf("- Configure SSL after installation: vps-init keycloak ssl %s\n", domain)
+	fmt.Printf("- Configure SSL after installation: mellow keycloak ssl %s\n", domain)
 	fmt.Printf("- Update DNS to point %s to this server\n", domain)
 
 	return nil
@@ -508,8 +506,8 @@ server {
 	keycloakDir := "/opt/keycloak"
 
 	// Update docker-compose.yml to enable HTTPS
-	updateCmd := fmt.Sprintf("cd %s && sed -i +e 's/KC_HOSTNAME_STRICT_HTTPS: false/KC_HOSTNAME_STRICT_HTTPS: true/' docker-compose.yml", keycloakDir)
-	conn.RunCommand(updateCmd, plugin.WithHideOutput())
+	updateComposeCmd := fmt.Sprintf("cd %s && sed -i +e 's/KC_HOSTNAME_STRICT_HTTPS: false/KC_HOSTNAME_STRICT_HTTPS: true/' docker-compose.yml", keycloakDir)
+	conn.RunCommand(updateComposeCmd, plugin.WithHideOutput())
 
 	// Restart Keycloak to apply changes
 	fmt.Println("🔄 Restarting Keycloak to apply SSL configuration...")

@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 type Plugin struct {
@@ -31,7 +31,7 @@ func (p *Plugin) Version() string {
 }
 
 func (p *Plugin) Author() string {
-	return "VPS-Init Team"
+	return "Mellow Team"
 }
 
 func (p *Plugin) Initialize(config map[string]interface{}) error {
@@ -72,12 +72,12 @@ func (p *Plugin) GetRootCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "plugin",
 		Short: "Built-in plugin management commands",
-		Long: `Manage built-in VPS-Init plugins.
+		Long: `Manage built-in Mellow plugins.
 
 Examples:
-  vps-init plugin list
-  vps-init plugin info nginx
-  vps-init plugin validate`,
+  mellow plugin list
+  mellow plugin info nginx
+  mellow plugin validate`,
 	}
 
 	// list command
@@ -95,8 +95,8 @@ Examples:
 		Long: `Show detailed information about a built-in plugin including its commands and dependencies.
 
 Examples:
-  vps-init plugin info nginx
-  vps-init plugin info redis`,
+  mellow plugin info nginx
+  mellow plugin info redis`,
 		Args: cobra.ExactArgs(1),
 		RunE: p.runInfo,
 	}
@@ -109,8 +109,8 @@ Examples:
 		Long: `Validate all built-in plugins for compatibility and integrity.
 
 Examples:
-  vps-init plugin validate
-  vps-init plugin validate --strict`,
+  mellow plugin validate
+  mellow plugin validate --strict`,
 		RunE: p.runValidate,
 	}
 	validateCmd.Flags().Bool("strict", false, "Enable strict validation")
@@ -151,9 +151,9 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 		Name:        "plugin-manager",
 		Description: "Built-in plugin management",
 		Version:     "1.0.0",
-		Author:      "VPS-Init Team",
+		Author:      "Mellow Team",
 		License:     "MIT",
-		Repository:  "github.com/wasilwamark/vps-init",
+		Repository:  "github.com/wasilwamark/mellow",
 		Tags:        []string{"core", "management", "builtin"},
 		Validated:   true,
 		TrustLevel:  "official",

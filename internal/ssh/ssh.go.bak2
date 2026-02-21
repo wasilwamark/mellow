@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 // connection implements the plugin.Connection interface
@@ -147,7 +147,7 @@ func (c *connection) Close() error {
 	return nil
 }
 
-// Helper methods for advanced features (from vps-init-ssh)
+// Helper methods for advanced features (from mellow-ssh)
 
 // RunInteractive runs a command and streams stdout/stderr to the current process
 func (c *connection) RunInteractive(cmd string) error {
@@ -405,7 +405,7 @@ func (c *connection) convertResult(r *enhancedResult) plugin.Result {
 	}
 }
 
-// enhancedResult is our internal result structure that matches vps-init-core
+// enhancedResult is our internal result structure that matches mellow-core
 type enhancedResult struct {
 	Success   bool
 	Stdout    string

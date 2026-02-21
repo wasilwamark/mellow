@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/wasilwamark/vps-init/internal/cli"
+	"github.com/wasilwamark/mellow/internal/cli"
 )
 
 func main() {

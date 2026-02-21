@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/wasilwamark/vps-init/internal/config"
+	"github.com/wasilwamark/mellow/internal/config"
 	
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 type Plugin struct {
@@ -30,7 +30,7 @@ func (p *Plugin) Version() string {
 }
 
 func (p *Plugin) Author() string {
-	return "VPS-Init Team"
+	return "Mellow Team"
 }
 
 func (p *Plugin) Initialize(config map[string]interface{}) error {
@@ -118,9 +118,9 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 		Name:        "alias",
 		Description: "Server alias management",
 		Version:     "1.0.0",
-		Author:      "VPS-Init Team",
+		Author:      "Mellow Team",
 		License:     "MIT",
-		Repository:  "github.com/wasilwamark/vps-init",
+		Repository:  "github.com/wasilwamark/mellow",
 		Tags:        []string{"core", "management", "alias"},
 		Validated:   true,
 		TrustLevel:  "official",
@@ -150,7 +150,7 @@ func (p *Plugin) handleList(ctx context.Context, conn plugin.Connection, args []
 	aliases := cfg.GetAliases()
 
 	if len(aliases) == 0 {
-		fmt.Println("No aliases found. Use 'vps-init alias add' to add one.")
+		fmt.Println("No aliases found. Use 'mellow alias add' to add one.")
 		return nil
 	}
 
@@ -190,7 +190,7 @@ func (p *Plugin) runList(cmd *cobra.Command, args []string) {
 	aliases := cfg.GetAliases()
 
 	if len(aliases) == 0 {
-		fmt.Println("No aliases found. Use 'vps-init alias add' to add one.")
+		fmt.Println("No aliases found. Use 'mellow alias add' to add one.")
 		return
 	}
 

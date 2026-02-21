@@ -8,9 +8,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/wasilwamark/vps-init/internal/distro"
-	"github.com/wasilwamark/vps-init/internal/pkgmgr"
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+	"github.com/wasilwamark/mellow/internal/distro"
+	"github.com/wasilwamark/mellow/internal/pkgmgr"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 type Plugin struct{}
@@ -24,7 +24,7 @@ func (p *Plugin) Description() string {
 }
 
 func (p *Plugin) Author() string {
-	return "VPS-Init"
+	return "Mellow"
 }
 
 func (p *Plugin) Version() string {
@@ -45,7 +45,7 @@ func (p *Plugin) Stop(ctx context.Context) error {
 
 func (p *Plugin) GetRootCommand() *cobra.Command {
 	// Return nil to prevent nginx from appearing as a top-level command
-	// nginx should only be accessible via the plugin system: vps-init user@host nginx <command>
+	// nginx should only be accessible via the plugin system: mellow user@host nginx <command>
 	return nil
 }
 
@@ -77,7 +77,7 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 		Version:     p.Version(),
 		Author:      p.Author(),
 		License:     "MIT",
-		Repository:  "github.com/wasilwamark/vps-init-plugins/" + p.Name(),
+		Repository:  "github.com/wasilwamark/mellow-plugins/" + p.Name(),
 		Tags:        []string{"TODO", "add", "tags"},
 		Validated:   true,
 		TrustLevel:  "official",
@@ -329,7 +329,7 @@ func (p *Plugin) addSiteHandler(ctx context.Context, conn plugin.Connection, arg
 
 	// Check if Nginx is installed
 	if !conn.DirectoryExists("/etc/nginx/sites-available") {
-		return fmt.Errorf("Nginx configuration directory not found. Is Nginx installed? Try running: vps-init <target> nginx install")
+		return fmt.Errorf("Nginx configuration directory not found. Is Nginx installed? Try running: mellow <target> nginx install")
 	}
 
 	// Create temp file securely? Or just echo to path.

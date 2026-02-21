@@ -8,16 +8,16 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/wasilwamark/vps-init/internal/distro"
-	"github.com/wasilwamark/vps-init/internal/pkgmgr"
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+	"github.com/wasilwamark/mellow/internal/distro"
+	"github.com/wasilwamark/mellow/internal/pkgmgr"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 type Plugin struct{}
 
 func (p *Plugin) Name() string                                   { return "restic" }
 func (p *Plugin) Description() string                            { return "Restic Backup Manager (S3)" }
-func (p *Plugin) Author() string                                 { return "VPS-Init" }
+func (p *Plugin) Author() string                                 { return "Mellow" }
 func (p *Plugin) Version() string                                { return "0.0.1" }
 func (p *Plugin) Initialize(config map[string]interface{}) error { return nil }
 
@@ -45,9 +45,9 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 		Name:        "restic",
 		Description: "Restic Backup Manager (S3)",
 		Version:     "0.0.1",
-		Author:      "VPS-Init",
+		Author:      "Mellow",
 		License:     "MIT",
-		Repository:  "github.com/wasilwamark/vps-init-plugins/restic",
+		Repository:  "github.com/wasilwamark/mellow-plugins/restic",
 		Tags:        []string{"backup", "storage", "s3", "restic"},
 		Validated:   true,
 		TrustLevel:  "official",
@@ -176,18 +176,18 @@ export AWS_SECRET_ACCESS_KEY="%s"
 export RESTIC_PASSWORD="%s"
 `, repo, id, key, password)
 
-	conn.RunSudo("mkdir -p /etc/vps-init", pass)
+	conn.RunSudo("mkdir -p /etc/mellow", pass)
 	if err := conn.WriteFile(envContent, "/tmp/restic.env"); err != nil {
 		return fmt.Errorf("failed to write restic env file: %w", err)
 	}
-	conn.RunSudo("mv /tmp/restic.env /etc/vps-init/restic.env", pass)
-	conn.RunSudo("chmod 600 /etc/vps-init/restic.env", pass)
+	conn.RunSudo("mv /tmp/restic.env /etc/mellow/restic.env", pass)
+	conn.RunSudo("chmod 600 /etc/mellow/restic.env", pass)
 
-	fmt.Println("🔒 Credentials saved to /etc/vps-init/restic.env")
+	fmt.Println("🔒 Credentials saved to /etc/mellow/restic.env")
 
 	// Initialize Repo
-	cmd := "bash -c 'source /etc/vps-init/restic.env && restic init'"
-	// We run directly as root? or standard user? standard user might not read /etc/vps-init/restic.env if 600 root
+	cmd := "bash -c 'source /etc/mellow/restic.env && restic init'"
+	// We run directly as root? or standard user? standard user might not read /etc/mellow/restic.env if 600 root
 	// Let's run as root for now since backups usually need root to read all files
 	fmt.Println("🚀 Initializing backend...")
 	result := conn.RunSudo(cmd, pass)
@@ -353,7 +353,7 @@ func (p *Plugin) performBackup(conn plugin.Connection, targetDB DatabaseInfo, su
 	}
 
 	// Pipe to Restic
-	fullCmd := fmt.Sprintf("bash -c 'source /etc/vps-init/restic.env && %s | restic backup --stdin --stdin-filename %s.%s'", dumpCmd, targetDB.Name, ext)
+	fullCmd := fmt.Sprintf("bash -c 'source /etc/mellow/restic.env && %s | restic backup --stdin --stdin-filename %s.%s'", dumpCmd, targetDB.Name, ext)
 
 	result := conn.RunSudo(fullCmd, sudoPass)
 	if !result.Success {
@@ -568,7 +568,7 @@ func (p *Plugin) restoreDbHandler(ctx context.Context, conn plugin.Connection, a
 
 	// 1. List Snapshots
 	fmt.Println("📋 Fetching available snapshots...")
-	cmd := "bash -c 'source /etc/vps-init/restic.env && restic snapshots --json'"
+	cmd := "bash -c 'source /etc/mellow/restic.env && restic snapshots --json'"
 	result := conn.RunSudo(cmd, pass)
 	if !result.Success {
 		return fmt.Errorf("failed to list snapshots: %s", result.Stderr)
@@ -702,23 +702,23 @@ func (p *Plugin) restoreDbHandler(ctx context.Context, conn plugin.Connection, a
 			passFlag = fmt.Sprintf("-p'%s'", dbPass)
 		}
 		if targetInst.Type == "docker" {
-			restoreCmd = fmt.Sprintf("bash -c 'source /etc/vps-init/restic.env && restic dump %s %s | docker exec -i %s mysql -u %s %s %s'",
+			restoreCmd = fmt.Sprintf("bash -c 'source /etc/mellow/restic.env && restic dump %s %s | docker exec -i %s mysql -u %s %s %s'",
 				selectedSnap.ID, filename, targetInst.ContainerID, user, passFlag, dbName)
 		} else {
-			restoreCmd = fmt.Sprintf("bash -c 'source /etc/vps-init/restic.env && restic dump %s %s | mysql -u %s %s %s'",
+			restoreCmd = fmt.Sprintf("bash -c 'source /etc/mellow/restic.env && restic dump %s %s | mysql -u %s %s %s'",
 				selectedSnap.ID, filename, user, passFlag, dbName)
 		}
 
 	case "postgres":
 		if targetInst.Type == "docker" {
-			restoreCmd = fmt.Sprintf("bash -c 'source /etc/vps-init/restic.env && restic dump %s %s | docker exec -i -e PGPASSWORD='%s' %s psql -U %s %s'",
+			restoreCmd = fmt.Sprintf("bash -c 'source /etc/mellow/restic.env && restic dump %s %s | docker exec -i -e PGPASSWORD='%s' %s psql -U %s %s'",
 				selectedSnap.ID, filename, dbPass, targetInst.ContainerID, user, dbName)
 		} else {
 			env := ""
 			if dbPass != "" {
 				env = fmt.Sprintf("PGPASSWORD='%s' ", dbPass)
 			}
-			restoreCmd = fmt.Sprintf("bash -c 'source /etc/vps-init/restic.env && %srestic dump %s %s | psql -U %s %s'",
+			restoreCmd = fmt.Sprintf("bash -c 'source /etc/mellow/restic.env && %srestic dump %s %s | psql -U %s %s'",
 				env, selectedSnap.ID, filename, user, dbName)
 		}
 
@@ -728,10 +728,10 @@ func (p *Plugin) restoreDbHandler(ctx context.Context, conn plugin.Connection, a
 			auth = fmt.Sprintf("--username %s --password '%s' --authenticationDatabase admin", user, dbPass)
 		}
 		if targetInst.Type == "docker" {
-			restoreCmd = fmt.Sprintf("bash -c 'source /etc/vps-init/restic.env && restic dump %s %s | docker exec -i %s mongorestore %s --archive'",
+			restoreCmd = fmt.Sprintf("bash -c 'source /etc/mellow/restic.env && restic dump %s %s | docker exec -i %s mongorestore %s --archive'",
 				selectedSnap.ID, filename, targetInst.ContainerID, auth)
 		} else {
-			restoreCmd = fmt.Sprintf("bash -c 'source /etc/vps-init/restic.env && restic dump %s %s | mongorestore %s --archive'",
+			restoreCmd = fmt.Sprintf("bash -c 'source /etc/mellow/restic.env && restic dump %s %s | mongorestore %s --archive'",
 				selectedSnap.ID, filename, auth)
 		}
 	}
@@ -746,12 +746,12 @@ func (p *Plugin) restoreDbHandler(ctx context.Context, conn plugin.Connection, a
 }
 
 func (p *Plugin) snapshotsHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	conn.RunInteractive("sudo bash -c 'source /etc/vps-init/restic.env && restic snapshots'")
+	conn.RunInteractive("sudo bash -c 'source /etc/mellow/restic.env && restic snapshots'")
 	return nil
 }
 
 func (p *Plugin) unlockHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	conn.RunInteractive("sudo bash -c 'source /etc/vps-init/restic.env && restic unlock'")
+	conn.RunInteractive("sudo bash -c 'source /etc/mellow/restic.env && restic unlock'")
 	return nil
 }
 

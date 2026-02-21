@@ -10,13 +10,13 @@ All commands should be run against a target server alias (e.g., `ovh`) or connec
 
 | Command | Description | Example |
 | :--- | :--- | :--- |
-| `update` | Updates package lists (`apt-get update`) | `vps-init prod system update` |
-| `upgrade` | Upgrades installed packages | `vps-init prod system upgrade` |
-| `full-upgrade` | Performs dist-upgrade | `vps-init prod system full-upgrade` |
-| `autoremove` | Removes unused packages | `vps-init prod system autoremove` |
-| `install` | Installs specific packages | `vps-init prod system install git curl` |
-| `uninstall` | Removes specific packages | `vps-init prod system uninstall apache2` |
-| `shell` | Opens interactive SSH shell | `vps-init prod system shell` |
+| `update` | Updates package lists (`apt-get update`) | `mellow prod system update` |
+| `upgrade` | Upgrades installed packages | `mellow prod system upgrade` |
+| `full-upgrade` | Performs dist-upgrade | `mellow prod system full-upgrade` |
+| `autoremove` | Removes unused packages | `mellow prod system autoremove` |
+| `install` | Installs specific packages | `mellow prod system install git curl` |
+| `uninstall` | Removes specific packages | `mellow prod system uninstall apache2` |
+| `shell` | Opens interactive SSH shell | `mellow prod system shell` |
 
 ### Sudo Privileges
 
@@ -32,7 +32,7 @@ If your alias is `ovh`:
 
 ```bash
 export SSH_SUDO_PWD_OVH='your-secret-password'
-vps-init ovh system update
+mellow ovh system update
 ```
 
 The tool will automatically detect the alias `ovh`, look for `SSH_SUDO_PWD_OVH`, and inject the password when running sudo commands.
@@ -42,7 +42,7 @@ The tool will automatically detect the alias `ovh`, look for `SSH_SUDO_PWD_OVH`,
 You can save the password securely when adding the alias:
 
 ```bash
-vps-init alias add ovh user@host --sudo-password 'your-secret-password'
+mellow alias add ovh user@host --sudo-password 'your-secret-password'
 ```
 
-This saves the password to `~/.vps-init/secrets.json` with restricted permissions. The tool will check this file if the environment variable is not set.
+This saves the password to `~/.mellow/secrets.json` with restricted permissions. The tool will check this file if the environment variable is not set.

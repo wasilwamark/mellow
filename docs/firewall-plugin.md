@@ -17,7 +17,7 @@ The firewall plugin provides comprehensive firewall management using UFW (Uncomp
 ## Installation
 
 ```bash
-vps-init user@server firewall install
+mellow user@server firewall install
 ```
 
 ### Installation Options
@@ -32,16 +32,16 @@ vps-init user@server firewall install
 
 ```bash
 # Install with default settings (deny incoming, allow SSH)
-vps-init user@server firewall install
+mellow user@server firewall install
 
 # Install with allow default policy
-vps-init user@server firewall install --default-policy allow
+mellow user@server firewall install --default-policy allow
 
 # Install without logging
-vps-init user@server firewall install --enable-logging=false
+mellow user@server firewall install --enable-logging=false
 
 # Install without automatic SSH allowance
-vps-init user@server firewall install --allow-ssh=false
+mellow user@server firewall install --allow-ssh=false
 ```
 
 ## Usage
@@ -50,62 +50,62 @@ vps-init user@server firewall install --allow-ssh=false
 
 ```bash
 # Allow a specific port
-vps-init user@server firewall allow 80
+mellow user@server firewall allow 80
 
 # Allow a port with protocol
-vps-init user@server firewall allow 443 tcp
+mellow user@server firewall allow 443 tcp
 
 # Allow from specific IP
-vps-init user@server firewall allow 22 tcp 192.168.1.100
+mellow user@server firewall allow 22 tcp 192.168.1.100
 
 # Allow service names
-vps-init user@server firewall allow ssh
-vps-init user@server firewall allow http
-vps-init user@server firewall allow https
+mellow user@server firewall allow ssh
+mellow user@server firewall allow http
+mellow user@server firewall allow https
 ```
 
 ### Deny Traffic
 
 ```bash
 # Deny a specific port
-vps-init user@server firewall deny 23
+mellow user@server firewall deny 23
 
 # Deny from specific IP
-vps-init user@server firewall deny 22 tcp 192.168.1.50
+mellow user@server firewall deny 22 tcp 192.168.1.50
 
 # Deny all traffic from IP range
-vps-init user@server firewall deny 192.168.1.0/24
+mellow user@server firewall deny 192.168.1.0/24
 ```
 
 ### Firewall Management
 
 ```bash
 # Enable firewall (activates all rules)
-vps-init user@server firewall enable
+mellow user@server firewall enable
 
 # Disable firewall (deactivates all rules)
-vps-init user@server firewall disable
+mellow user@server firewall disable
 
 # Show firewall status and rules
-vps-init user@server firewall status
+mellow user@server firewall status
 
 # Reset firewall to defaults
-vps-init user@server firewall reset
+mellow user@server firewall reset
 ```
 
 ### Rule Management
 
 ```bash
 # Show numbered rules for deletion
-vps-init user@server firewall status
+mellow user@server firewall status
 
 # Delete specific rule by number
-vps-init user@server firewall delete 3
+mellow user@server firewall delete 3
 
 # Configure logging
-vps-init user@server firewall logging on
-vps-init user@server firewall logging high
-vps-init user@server firewall logging off
+mellow user@server firewall logging on
+mellow user@server firewall logging high
+mellow user@server firewall logging off
 ```
 
 ## Logging Levels
@@ -125,44 +125,44 @@ UFW supports different logging levels:
 
 ```bash
 # Install and configure firewall
-vps-init user@server firewall install
+mellow user@server firewall install
 
 # Allow HTTP and HTTPS traffic
-vps-init user@server firewall allow http
-vps-init user@server firewall allow https
+mellow user@server firewall allow http
+mellow user@server firewall allow https
 
 # Enable firewall
-vps-init user@server firewall enable
+mellow user@server firewall enable
 ```
 
 ### Database Server Access
 
 ```bash
 # Allow MySQL only from specific IP
-vps-init user@server firewall allow 3306 tcp 192.168.1.100
+mellow user@server firewall allow 3306 tcp 192.168.1.100
 
 # Allow PostgreSQL from application server
-vps-init user@server firewall allow 5432 tcp 10.0.1.50
+mellow user@server firewall allow 5432 tcp 10.0.1.50
 ```
 
 ### SSH Security
 
 ```bash
 # Restrict SSH to specific IP ranges
-vps-init user@server firewall delete 1  # Remove default SSH rule
-vps-init user@server firewall allow 22 tcp 192.168.1.0/24
-vps-init user@server firewall allow 22 tcp 10.0.0.0/8
+mellow user@server firewall delete 1  # Remove default SSH rule
+mellow user@server firewall allow 22 tcp 192.168.1.0/24
+mellow user@server firewall allow 22 tcp 10.0.0.0/8
 ```
 
 ### Development Environment
 
 ```bash
 # Install with allow policy (more permissive for development)
-vps-init user@server firewall install --default-policy allow
+mellow user@server firewall install --default-policy allow
 
 # Add specific restrictions as needed
-vps-init user@server firewall deny 23    # Block telnet
-vps-init user@server firewall deny 3389  # Block RDP
+mellow user@server firewall deny 23    # Block telnet
+mellow user@server firewall deny 3389  # Block RDP
 ```
 
 ## Safety Features
@@ -193,34 +193,34 @@ The plugin automatically includes SSH protection to prevent accidental lockouts:
 
 ```bash
 # More restrictive installation
-vps-init user@server firewall install \
+mellow user@server firewall install \
   --default-policy deny \
   --enable-logging=true \
   --allow-ssh=false
 
 # Then manually add specific rules
-vps-init user@server firewall allow 22 tcp 192.168.1.0/24
-vps-init user@server firewall allow 80
-vps-init user@server firewall allow 443
+mellow user@server firewall allow 22 tcp 192.168.1.0/24
+mellow user@server firewall allow 80
+mellow user@server firewall allow 443
 ```
 
 ### Service-Specific Rules
 
 ```bash
 # Web server rules
-vps-init user@server firewall allow 80    # HTTP
-vps-init user@server firewall allow 443   # HTTPS
-vps-init user@server firewall allow 8080  # Alternative HTTP
+mellow user@server firewall allow 80    # HTTP
+mellow user@server firewall allow 443   # HTTPS
+mellow user@server firewall allow 8080  # Alternative HTTP
 
 # Database rules
-vps-init user@server firewall allow 3306  # MySQL
-vps-init user@server firewall allow 5432  # PostgreSQL
-vps-init user@server firewall allow 6379  # Redis
+mellow user@server firewall allow 3306  # MySQL
+mellow user@server firewall allow 5432  # PostgreSQL
+mellow user@server firewall allow 6379  # Redis
 
 # Development tools
-vps-init user@server firewall allow 3000  # Node.js apps
-vps-init user@server firewall allow 8080  # Java apps
-vps-init user@server firewall allow 9000  # Development servers
+mellow user@server firewall allow 3000  # Node.js apps
+mellow user@server firewall allow 8080  # Java apps
+mellow user@server firewall allow 9000  # Development servers
 ```
 
 ## Troubleshooting
@@ -230,47 +230,47 @@ vps-init user@server firewall allow 9000  # Development servers
 1. **Can't SSH after enabling firewall**
    ```bash
    # Check SSH rules
-   vps-init user@server firewall status
+   mellow user@server firewall status
 
    # Add SSH rule if missing
-   vps-init user@server firewall allow ssh
+   mellow user@server firewall allow ssh
 
    # Or allow from your specific IP
-   vps-init user@server firewall allow 22 tcp <your-ip>
+   mellow user@server firewall allow 22 tcp <your-ip>
    ```
 
 2. **Service not accessible**
    ```bash
    # Check firewall status
-   vps-init user@server firewall status
+   mellow user@server firewall status
 
    # Verify rule exists
-   vps-init user@server firewall status | grep <port>
+   mellow user@server firewall status | grep <port>
 
    # Add rule if missing
-   vps-init user@server firewall allow <port>
+   mellow user@server firewall allow <port>
    ```
 
 3. **Resetting configuration**
    ```bash
    # Warning: This removes all rules
-   vps-init user@server firewall reset
+   mellow user@server firewall reset
 
    # Reconfigure with install
-   vps-init user@server firewall install
+   mellow user@server firewall install
    ```
 
 ### Debugging
 
 ```bash
 # Verbose status
-vps-init user@server firewall status
+mellow user@server firewall status
 
 # Check numbered rules
-vps-init user@server firewall status | grep "\[.*\]"
+mellow user@server firewall status | grep "\[.*\]"
 
 # Enable logging for debugging
-vps-init user@server firewall logging full
+mellow user@server firewall logging full
 
 # Check system logs
 ssh user@server "tail -f /var/log/ufw.log"
@@ -287,28 +287,28 @@ ssh user@server "sudo ufw status verbose"
 
 ## Integration with Other Plugins
 
-The firewall plugin works well with other VPS-Init plugins:
+The firewall plugin works well with other Mellow plugins:
 
 ```bash
 # Install firewall with fail2ban
-vps-init user@server firewall install
-vps-init user@server fail2ban install
+mellow user@server firewall install
+mellow user@server fail2ban install
 
 # Secure web server setup
-vps-init user@server firewall install
-vps-init user@server nginx install
-vps-init user@server firewall allow http
-vps-init user@server firewall allow https
-vps-init user@server firewall enable
+mellow user@server firewall install
+mellow user@server nginx install
+mellow user@server firewall allow http
+mellow user@server firewall allow https
+mellow user@server firewall enable
 ```
 
 ## Plugin Metadata
 
 - **Name**: firewall
 - **Version**: 1.0.0
-- **Author**: VPS-Init Team
+- **Author**: Mellow Team
 - **License**: MIT
-- **Repository**: github.com/wasilwamark/vps-init-plugins/firewall
+- **Repository**: github.com/wasilwamark/mellow-plugins/firewall
 - **Tags**: security, networking, firewall, ufw
 - **Dependencies**: system (>=1.0.0)
 - **Platforms**: linux/amd64, linux/arm64
@@ -326,5 +326,5 @@ To contribute to the firewall plugin:
 
 For issues, questions, or contributions:
 - GitHub Issues: [Repository Issues]
-- Documentation: [VPS-Init Documentation]
+- Documentation: [Mellow Documentation]
 - Community: [Discord/Slack Channel]

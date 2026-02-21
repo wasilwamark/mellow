@@ -94,13 +94,13 @@ logs/
 # Go
 /bin/
 /dbin/*
-/vps-init
+/mellow
 *.exe
 *.test
 *.prof
 go.work
 
 # plugins
-vps-init-core
-vps-init-ssh
-vps-init-keycloak~/.vps-init/cache/
+mellow-core
+mellow-ssh
+mellow-keycloak~/.mellow/cache/

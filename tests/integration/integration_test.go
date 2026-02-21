@@ -3,9 +3,9 @@ package integration
 import (
 	"testing"
 
-	"github.com/wasilwamark/vps-init/tests/integration/fixtures"
-	"github.com/wasilwamark/vps-init/tests/integration/helpers"
-	"github.com/wasilwamark/vps-init/tests/integration/suite"
+	"github.com/wasilwamark/mellow/tests/integration/fixtures"
+	"github.com/wasilwamark/mellow/tests/integration/helpers"
+	"github.com/wasilwamark/mellow/tests/integration/suite"
 )
 
 func TestUbuntu2204Container(t *testing.T) {

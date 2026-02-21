@@ -7,24 +7,24 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/wasilwamark/vps-init/internal/config"
-	ssh "github.com/wasilwamark/vps-init/internal/ssh"
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+	"github.com/wasilwamark/mellow/internal/config"
+	ssh "github.com/wasilwamark/mellow/internal/ssh"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 var rootCmd = &cobra.Command{
-	Use:     "vps-init",
+	Use:     "mellow",
 	Version: "0.0.1",
-	Short:   "VPS-Init - Configure your servers with simple commands",
-	Long: `VPS-Init is a CLI tool that makes server configuration easy.
+	Short:   "Mellow - Configure your servers with simple commands",
+	Long: `Mellow is a CLI tool that makes server configuration easy.
 
 Examples:
-  vps-init mark@1.2.3.4 nginx install
-  vps-init mark@1.2.3.4 nginx install-ssl api.tiza.africa
-  vps-init myserver docker install
-  vps-init --add-alias myserver mark@1.2.3.4
+  mellow mark@1.2.3.4 nginx install
+  mellow mark@1.2.3.4 nginx install-ssl api.tiza.africa
+  mellow myserver docker install
+  mellow --add-alias myserver mark@1.2.3.4
 
-Use "vps-init help" for more information.`,
+Use "mellow help" for more information.`,
 }
 
 var aliasCmd = &cobra.Command{
@@ -35,8 +35,8 @@ var aliasCmd = &cobra.Command{
 var addAliasCmd = &cobra.Command{
 	Use:   "add <name> <user@host>",
 	Short: "Add a server alias",
-	Example: `  vps-init alias add ovh ubuntu@1.2.3.4
-  vps-init alias add ovh ubuntu@1.2.3.4 --sudo-password 'my-secret'`,
+	Example: `  mellow alias add ovh ubuntu@1.2.3.4
+  mellow alias add ovh ubuntu@1.2.3.4 --sudo-password 'my-secret'`,
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg := config.New()
@@ -68,7 +68,7 @@ var listAliasesCmd = &cobra.Command{
 		aliases := cfg.GetAliases()
 
 		if len(aliases) == 0 {
-			fmt.Println("No aliases found. Use 'vps-init alias add' to add one.")
+			fmt.Println("No aliases found. Use 'mellow alias add' to add one.")
 			return
 		}
 
@@ -105,7 +105,7 @@ func init() {
 
 func executeDirectCommand() {
 	if len(os.Args) < 3 {
-		fmt.Println("Usage: vps-init user@host <plugin> <command> [args...]")
+		fmt.Println("Usage: mellow user@host <plugin> <command> [args...]")
 		os.Exit(1)
 	}
 
@@ -137,7 +137,7 @@ func executeDirectCommand() {
 		// Actually, aliases are handled by config.
 		// For now just error
 		fmt.Printf("❌ Unknown service/plugin: %s\n", pluginName)
-		fmt.Println("Run 'vps-init plugin list' to see available plugins.")
+		fmt.Println("Run 'mellow plugin list' to see available plugins.")
 		os.Exit(1)
 	}
 
@@ -164,7 +164,7 @@ func executeDirectCommand() {
 	parts := strings.Split(target, "@")
 	if len(parts) != 2 {
 		fmt.Printf("❌ Invalid target format '%s'. Expected 'user@host' or a valid alias.\n", target)
-		fmt.Println("Tip: Use 'vps-init alias list' to see available aliases.")
+		fmt.Println("Tip: Use 'mellow alias list' to see available aliases.")
 		os.Exit(1)
 	}
 	user := parts[0]

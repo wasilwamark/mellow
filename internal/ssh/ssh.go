@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wasilwamark/vps-init/internal/distro"
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+	"github.com/wasilwamark/mellow/internal/distro"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 // Connection interface defines the contract for SSH connections
@@ -24,7 +24,7 @@ type Connection interface {
 	DownloadFile(remotePath, localPath string) error
 	Close() error
 
-	// Enhanced SSH operations (from vps-init-ssh)
+	// Enhanced SSH operations (from mellow-ssh)
 	Connect() bool
 	Disconnect()
 	Reconnect() error
@@ -328,7 +328,7 @@ func (c *connection) convertResult(result result) plugin.Result {
 	}
 }
 
-// Helper methods for advanced features (from vps-init-ssh)
+// Helper methods for advanced features (from mellow-ssh)
 
 // RunInteractive runs a command and streams stdout/stderr to the current process
 func (c *connection) RunInteractive(cmd string) error {

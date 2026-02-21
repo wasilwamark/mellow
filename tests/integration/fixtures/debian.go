@@ -7,7 +7,7 @@ import (
 
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
-	"github.com/wasilwamark/vps-init/tests/integration/helpers"
+	"github.com/wasilwamark/mellow/tests/integration/helpers"
 )
 
 type UbuntuFixture struct {

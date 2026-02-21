@@ -9,16 +9,16 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/wasilwamark/vps-init/internal/distro"
-	"github.com/wasilwamark/vps-init/internal/pkgmgr"
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+	"github.com/wasilwamark/mellow/internal/distro"
+	"github.com/wasilwamark/mellow/internal/pkgmgr"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 type Plugin struct{}
 
 func (p *Plugin) Name() string                                   { return "wireguard" }
 func (p *Plugin) Description() string                            { return "Wireguard VPN Server" }
-func (p *Plugin) Author() string                                 { return "VPS-Init" }
+func (p *Plugin) Author() string                                 { return "Mellow" }
 func (p *Plugin) Version() string                                { return "0.0.1" }
 func (p *Plugin) Initialize(config map[string]interface{}) error { return nil }
 func (p *Plugin) Start(ctx context.Context) error                { return nil }
@@ -49,9 +49,9 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 		Name:        "wireguard",
 		Description: "Wireguard VPN Server",
 		Version:     "0.0.1",
-		Author:      "VPS-Init",
+		Author:      "Mellow",
 		License:     "MIT",
-		Repository:  "github.com/wasilwamark/vps-init-plugins/wireguard",
+		Repository:  "github.com/wasilwamark/mellow-plugins/wireguard",
 		Tags:        []string{"vpn", "networking", "security", "wireguard"},
 		Validated:   true,
 		TrustLevel:  "official",
@@ -967,7 +967,7 @@ For security, please keep this configuration file safe and do not share it with 
 The private key is included in the configuration file above.
 
 Best regards,
-VPS-Init WireGuard Plugin
+Mellow WireGuard Plugin
 `, name, clientAddr, endpoint, cPub, clientConfig, name, name)
 
 	// Send email

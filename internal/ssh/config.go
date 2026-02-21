@@ -3,10 +3,10 @@ package ssh
 import (
 	"time"
 
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
-// SSHConfig holds SSH-specific configuration that extends the VPS-Init plugin config
+// SSHConfig holds SSH-specific configuration that extends the Mellow plugin config
 type SSHConfig struct {
 	// Basic connection info
 	Host     string
@@ -20,7 +20,7 @@ type SSHConfig struct {
 	ServerAliveCountMax   int
 	ConnectTimeout        time.Duration
 
-	// Enhanced options from vps-init-core
+	// Enhanced options from mellow-core
 	HideOutput bool
 	Timeout    int // seconds
 	EnvVars    map[string]string

@@ -5,15 +5,15 @@ The WordPress plugin automates the deployment of a fully functional **LEMP Stack
 ## Usage
 
 ```bash
-vps-init <target> wordpress <command> [args...]
+mellow <target> wordpress <command> [args...]
 ```
 
 ## Commands
 
 | Command | Description | Example |
 | :--- | :--- | :--- |
-| `install` | Installs system dependencies (PHP, WP-CLI) | `vps-init prod wordpress install` |
-| `create-site` | **Wizard** to deploy a new site | `vps-init prod wordpress create-site example.com` |
+| `install` | Installs system dependencies (PHP, WP-CLI) | `mellow prod wordpress install` |
+| `create-site` | **Wizard** to deploy a new site | `mellow prod wordpress create-site example.com` |
 
 ## Deployment Flow (`create-site`)
 
@@ -33,23 +33,23 @@ The `create-site` command is an interactive wizard that performs the following s
 1.  **Prerequisites**:
     Ensure Nginx and MySQL are installed.
     ```bash
-    vps-init prod nginx install
-    vps-init prod mysql install
+    mellow prod nginx install
+    mellow prod mysql install
     ```
 
 2.  **Install WordPress Tools**:
     ```bash
-    vps-init prod wordpress install
+    mellow prod wordpress install
     ```
 
 3.  **Deploy a Site**:
     ```bash
-    vps-init prod wordpress create-site blog.example.com
+    mellow prod wordpress create-site blog.example.com
     ```
     *Follow the interactive prompts.*
 
 4.  **Secure It**:
     Use the Nginx plugin to add SSL.
     ```bash
-    vps-init prod nginx install-ssl blog.example.com
+    mellow prod nginx install-ssl blog.example.com
     ```

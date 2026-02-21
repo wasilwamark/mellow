@@ -7,9 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/wasilwamark/vps-init/internal/distro"
-	"github.com/wasilwamark/vps-init/internal/pkgmgr"
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+	"github.com/wasilwamark/mellow/internal/distro"
+	"github.com/wasilwamark/mellow/internal/pkgmgr"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 type Plugin struct{}
@@ -27,7 +27,7 @@ func (p *Plugin) Version() string {
 }
 
 func (p *Plugin) Author() string {
-	return "VPS-Init Team"
+	return "Mellow Team"
 }
 
 func (p *Plugin) Initialize(config map[string]interface{}) error {
@@ -72,9 +72,9 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 		Name:        "keycloak",
 		Description: "Keycloak identity and access management service",
 		Version:     "1.0.0",
-		Author:      "VPS-Init Team",
+		Author:      "Mellow Team",
 		License:     "MIT",
-		Repository:  "github.com/wasilwamark/vps-init/services/keycloak",
+		Repository:  "github.com/wasilwamark/mellow/services/keycloak",
 		Tags:        []string{"identity", "authentication", "sso", "keycloak"},
 		Validated:   true,
 		TrustLevel:  "official",

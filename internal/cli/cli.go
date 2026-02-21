@@ -3,7 +3,7 @@ package cli
 import (
 	"os"
 
-	"github.com/wasilwamark/vps-init/pkg/plugin"
+	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
 func InitPluginSystem() error {

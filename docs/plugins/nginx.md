@@ -7,7 +7,7 @@ The **Nginx** plugin allows you to install, configure, and manage the Nginx web 
 All commands are run against a target server alias:
 
 ```bash
-vps-init <target> nginx <command> [args]
+mellow <target> nginx <command> [args]
 ```
 
 ## Commands
@@ -23,22 +23,22 @@ vps-init <target> nginx <command> [args]
 *   `add-site <domain> [--proxy <port>] [--file <path>] [--ssl]`:
     *   **Proxy Mode (Default)**: Creates a reverse proxy config pointing to `localhost:<port>` (default 3000).
         ```bash
-        vps-init prod nginx add-site api.example.com --proxy 8080
+        mellow prod nginx add-site api.example.com --proxy 8080
         ```
     *   **Custom Config**: Uploads a local configuration file.
         ```bash
-        vps-init prod nginx add-site static.example.com --file ./mysite.conf
+        mellow prod nginx add-site static.example.com --file ./mysite.conf
         ```
     *   **One-Step SSL**: Add `--ssl` to automatically install certificates after configuration.
         ```bash
-        vps-init prod nginx add-site api.example.com --ssl
+        mellow prod nginx add-site api.example.com --ssl
         ```
     *   *Safety*: Automatically validates config with `nginx -t` and rolls back if invalid.
 
 *   `remove-site <domain>`:
     *   Removes the site configuration and correctly reloads Nginx.
     *   ```bash
-        vps-init prod nginx remove-site api.example.com
+        mellow prod nginx remove-site api.example.com
         ```
 
 ### SSL / Security
@@ -46,7 +46,7 @@ vps-init <target> nginx <command> [args]
 *   `install-ssl [domain]`:
     *   Installs Certbot and requests a Let's Encrypt SSL certificate.
     *   **Interactive Mode**: If `[domain]` is omitted, lists available sites for selection.
-    *   **Direct Mode**: `vps-init myalias nginx install-ssl mydomain.com`
+    *   **Direct Mode**: `mellow myalias nginx install-ssl mydomain.com`
 
 ### Observability
 
@@ -60,18 +60,18 @@ vps-init <target> nginx <command> [args]
 
 ```bash
 # 1. Install Nginx
-vps-init myserver nginx install
+mellow myserver nginx install
 
 # 2. Add site proxying to your app running on port 3000
-vps-init myserver nginx add-site myapp.com --proxy 3000
+mellow myserver nginx add-site myapp.com --proxy 3000
 
 # 3. Secure it with SSL
-vps-init myserver nginx install-ssl myapp.com
+mellow myserver nginx install-ssl myapp.com
 ```
 
 **2. Debugging issues:**
 
 ```bash
 # Watch logs while you make requests
-vps-init myserver nginx logs
+mellow myserver nginx logs
 ```

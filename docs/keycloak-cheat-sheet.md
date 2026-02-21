@@ -6,82 +6,82 @@ Quick reference for Keycloak plugin commands and common operations.
 
 ```bash
 # Basic installation
-vps-init myserver keycloak install
+mellow myserver keycloak install
 
 # Custom domain
-vps-init myserver keycloak install sso.example.com
+mellow myserver keycloak install sso.example.com
 
 # Install SSL
-vps-init myserver keycloak ssl sso.example.com
+mellow myserver keycloak ssl sso.example.com
 ```
 
 ## Service Management
 
 ```bash
 # Start/stop/restart
-vps-init myserver keycloak start
-vps-init myserver keycloak stop
-vps-init myserver keycloak restart
+mellow myserver keycloak start
+mellow myserver keycloak stop
+mellow myserver keycloak restart
 
 # Status and logs
-vps-init myserver keycloak status
-vps-init myserver keycloak logs
-vps-init myserver keycloak logs keycloak-db
+mellow myserver keycloak status
+mellow myserver keycloak logs
+mellow myserver keycloak logs keycloak-db
 ```
 
 ## Realm Management
 
 ```bash
 # List realms
-vps-init myserver keycloak realm list
+mellow myserver keycloak realm list
 
 # Create realm
-vps-init myserver keycloak realm create my-realm
+mellow myserver keycloak realm create my-realm
 
 # Delete realm
-vps-init myserver keycloak realm delete my-realm
+mellow myserver keycloak realm delete my-realm
 ```
 
 ## User Management
 
 ```bash
 # List users (master realm)
-vps-init myserver keycloak user list
+mellow myserver keycloak user list
 
 # Create user
-vps-init myserver keycloak user create username
+mellow myserver keycloak user create username
 
 # Create user in specific realm
-vps-init myserver keycloak user create username my-realm
+mellow myserver keycloak user create username my-realm
 
 # Reset password
-vps-init myserver keycloak user reset-password username
+mellow myserver keycloak user reset-password username
 ```
 
 ## Client Management
 
 ```bash
 # List clients
-vps-init myserver keycloak client list
+mellow myserver keycloak client list
 
 # Create client
-vps-init myserver keycloak client create client-name
+mellow myserver keycloak client create client-name
 
 # Create client in realm
-vps-init myserver keycloak client create client-name my-realm
+mellow myserver keycloak client create client-name my-realm
 ```
 
 ## Backup & Restore
 
 ```bash
 # Create backup
-vps-init myserver keycloak backup
+mellow myserver keycloak backup
 
 # Restore from backup
-vps-init myserver keycloak restore /path/to/backup.tar.gz
+mellow myserver keycloak restore /path/to/backup.tar.gz
 
 # Interactive configuration
-vps-init myserver keycloak configure
+mellow myserver keycloak configure
 ```
 
 ## Common URLs
@@ -103,10 +103,10 @@ After installation:
 
 ```bash
 # Check all services
-vps-init myserver keycloak status
+mellow myserver keycloak status
 
 # Check Docker containers
-vps-init myserver docker ps
+mellow myserver docker ps
 
 # Test HTTP response
 curl -f http://your-domain/health/ready
@@ -125,26 +125,26 @@ ssh myserver "certbot certificates"
 
 ```bash
 # 1. Install dependencies
-vps-init myserver docker install
-vps-init myserver nginx install
+mellow myserver docker install
+mellow myserver nginx install
 
 # 2. Install Keycloak
-vps-init myserver keycloak install sso.example.com
+mellow myserver keycloak install sso.example.com
 
 # 3. Configure SSL
-vps-init myserver keycloak ssl sso.example.com
+mellow myserver keycloak ssl sso.example.com
 
 # 4. Create realm for apps
-vps-init myserver keycloak realm create my-apps
+mellow myserver keycloak realm create my-apps
 
 # 5. Create admin user for realm
-vps-init myserver keycloak user create admin-user my-apps
+mellow myserver keycloak user create admin-user my-apps
 
 # 6. Create OAuth client
-vps-init myserver keycloak client create web-app my-apps
+mellow myserver keycloak client create web-app my-apps
 
 # 7. Create backup
-vps-init myserver keycloak backup
+mellow myserver keycloak backup
 ```
 
 ## Environment Variables
@@ -172,7 +172,7 @@ environment:
 
 ```bash
 # Resource usage
-vps-init myserver keycloak status
+mellow myserver keycloak status
 
 # Docker stats
 ssh myserver "docker stats"
@@ -181,7 +181,7 @@ ssh myserver "docker stats"
 ssh myserver "free -h && df -h"
 
 # Recent logs
-vps-init myserver keycloak logs | tail -50
+mellow myserver keycloak logs | tail -50
 ```
 
 ## Security Checklist
