@@ -42,7 +42,7 @@ The tool will automatically detect the alias `ovh`, look for `SSH_SUDO_PWD_OVH`,
 You can save the password securely when adding the alias:
 
 ```bash
-mellow alias add ovh user@host --sudo-password 'your-secret-password'
+mellow alias add ovh user@host --password 'your-secret-password'
 ```
 
 This saves the password to `~/.mellow/secrets.json` with restricted permissions. The tool will check this file if the environment variable is not set.

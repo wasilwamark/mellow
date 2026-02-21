@@ -23,7 +23,7 @@ Redis is an open-source, in-memory data structure store used as a database, cach
 mellow redis install
 
 # Install with custom sudo password
-mellow redis install --sudo-password=your_password
+mellow redis install --password=your_password
 ```
 
 The plugin will:

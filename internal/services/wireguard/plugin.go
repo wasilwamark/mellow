@@ -105,7 +105,7 @@ func (p *Plugin) GetCommands() []plugin.Command {
 
 func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	fmt.Println("🛡️  Installing Wireguard & Tools...")
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 	pkgMgr := getPackageManager(conn)
 
 	// Update first
@@ -131,7 +131,7 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 
 func (p *Plugin) setupHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	fmt.Println("⚙️  Setting up Wireguard Server...")
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	// 1. Generate Server Keys
 	privKey, pubKey, err := generateKeys(conn)
@@ -208,7 +208,7 @@ func (p *Plugin) addPeerHandler(ctx context.Context, conn plugin.Connection, arg
 		return fmt.Errorf("usage: add-peer <name> [--email=email@example.com] [--smtp-host=smtp.gmail.com:587] [--smtp-user=user] [--smtp-pass=password] [--smtp-from=from@example.com]")
 	}
 	name := args[0]
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	// Get optional email parameter
 	email := ""
@@ -427,7 +427,7 @@ PersistentKeepalive = 25
 }
 
 func (p *Plugin) removePeerHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	// Get the config file to list peers
 	configRes := conn.RunSudo("cat /etc/wireguard/wg0.conf", pass)
@@ -685,7 +685,7 @@ func (p *Plugin) statusHandler(ctx context.Context, conn plugin.Connection, args
 }
 
 func (p *Plugin) listPeersHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	fmt.Println("🔌 WireGuard Peers Overview")
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
@@ -883,7 +883,7 @@ func (p *Plugin) listPeersHandler(ctx context.Context, conn plugin.Connection, a
 
 func (p *Plugin) restartHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	fmt.Println("🔄 Restarting Wireguard service...")
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	// Restart the service
 	result := conn.RunSudo("systemctl restart wg-quick@wg0", pass)
@@ -1003,8 +1003,8 @@ func getSMTPFlag(flags map[string]interface{}, key, defaultValue string) string 
 	return defaultValue
 }
 
-func getSudoPass(flags map[string]interface{}) string {
-	if v, ok := flags["sudo-password"]; ok {
+func getPassword(flags map[string]interface{}) string {
+	if v, ok := flags["password"]; ok {
 		return v.(string)
 	}
 	return ""

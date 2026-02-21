@@ -150,12 +150,12 @@ func (p *Plugin) GetCommands() []plugin.Command {
 func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	fmt.Println("🌐 Installing Nginx...")
 
-	sudoPass := getSudoPass(flags)
+	sshPass := getPassword(flags)
 	pkgMgr := getPackageManager(conn)
 
 	updateCmd, _ := pkgMgr.Update()
 	logCommand(updateCmd)
-	if result := conn.RunSudo(updateCmd, sudoPass); !result.Success {
+	if result := conn.RunSudo(updateCmd, sshPass); !result.Success {
 		return fmt.Errorf("failed to update package lists: %s", result.Stderr)
 	}
 
@@ -164,7 +164,7 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 		return err
 	}
 	logCommand(installCmd)
-	if result := conn.RunSudo(installCmd, sudoPass); !result.Success {
+	if result := conn.RunSudo(installCmd, sshPass); !result.Success {
 		return fmt.Errorf("failed to install nginx: %s", result.Stderr)
 	}
 
@@ -178,7 +178,7 @@ func (p *Plugin) statusHandler(ctx context.Context, conn plugin.Connection, args
 
 func (p *Plugin) serviceActionHandler(action string) plugin.CommandHandler {
 	return func(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-		pass := getSudoPass(flags)
+		pass := getPassword(flags)
 
 		// For reload, always test config first
 		if action == "reload" {
@@ -347,7 +347,7 @@ func (p *Plugin) addSiteHandler(ctx context.Context, conn plugin.Connection, arg
 		fmt.Sprintf("ln -sf %s /etc/nginx/sites-enabled/", confPath),
 	}
 
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 	for _, cmd := range cmds {
 		result := conn.RunSudo(cmd, pass)
 		if !result.Success {
@@ -396,7 +396,7 @@ func (p *Plugin) removeSiteHandler(ctx context.Context, conn plugin.Connection, 
 		"systemctl reload nginx",
 	}
 
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 	for _, cmd := range cmds {
 		result := conn.RunSudo(cmd, pass)
 		if !result.Success {
@@ -450,7 +450,7 @@ func (p *Plugin) installSSLHandler(ctx context.Context, conn plugin.Connection, 
 		domain = validSites[selection-1]
 	}
 
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	fmt.Println("🔒 Installing Certbot and SSL...")
 
@@ -477,8 +477,8 @@ func (p *Plugin) installSSLHandler(ctx context.Context, conn plugin.Connection, 
 }
 
 // Helper
-func getSudoPass(flags map[string]interface{}) string {
-	if v, ok := flags["sudo-password"]; ok {
+func getPassword(flags map[string]interface{}) string {
+	if v, ok := flags["password"]; ok {
 		return v.(string)
 	}
 	return ""

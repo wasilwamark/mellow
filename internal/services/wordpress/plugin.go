@@ -90,7 +90,7 @@ func (p *Plugin) GetCommands() []plugin.Command {
 
 func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	fmt.Println("🐘 Installing PHP and Dependencies...")
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 	pkgMgr := getPackageManager(conn)
 
 	// Update
@@ -129,7 +129,7 @@ func (p *Plugin) createSiteHandler(ctx context.Context, conn plugin.Connection, 
 		return fmt.Errorf("usage: create-site <domain>")
 	}
 	domain := args[0]
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	// Interactive Wizard
 	fmt.Println("🚀 Standard WordPress Deployment Wizard")
@@ -281,8 +281,8 @@ func (p *Plugin) createSiteHandler(ctx context.Context, conn plugin.Connection, 
 	return nil
 }
 
-func getSudoPass(flags map[string]interface{}) string {
-	if v, ok := flags["sudo-password"]; ok {
+func getPassword(flags map[string]interface{}) string {
+	if v, ok := flags["password"]; ok {
 		return v.(string)
 	}
 	return ""

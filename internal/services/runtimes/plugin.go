@@ -142,7 +142,7 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 	language := strings.ToLower(args[0])
 	version := args[1]
 
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	switch language {
 	case "node", "nodejs", "node.js":
@@ -637,7 +637,7 @@ func (p *Plugin) removeHandler(ctx context.Context, conn plugin.Connection, args
 
 	language := strings.ToLower(args[0])
 	version := args[1]
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	switch language {
 	case "node", "nodejs", "node.js":
@@ -816,8 +816,8 @@ func (p *Plugin) updateHandler(ctx context.Context, conn plugin.Connection, args
 }
 
 // Helper
-func getSudoPass(flags map[string]interface{}) string {
-	if v, ok := flags["sudo-password"]; ok {
+func getPassword(flags map[string]interface{}) string {
+	if v, ok := flags["password"]; ok {
 		return v.(string)
 	}
 	return ""

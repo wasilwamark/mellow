@@ -36,7 +36,7 @@ make install
 **Add Server & Command**
 
 ```bash
-mellow alias add myserver user@1.2.3.4 --sudo-password 'password'
+mellow alias add myserver user@1.2.3.4 --password 'password'
 mellow myserver system update
 ```
 

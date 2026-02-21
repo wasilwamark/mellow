@@ -36,7 +36,7 @@ var addAliasCmd = &cobra.Command{
 	Use:   "add <name> <user@host>",
 	Short: "Add a server alias",
 	Example: `  mellow alias add ovh ubuntu@1.2.3.4
-  mellow alias add ovh ubuntu@1.2.3.4 --sudo-password 'my-secret'`,
+  mellow alias add ovh ubuntu@1.2.3.4 --password 'my-secret'`,
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg := config.New()
@@ -45,13 +45,14 @@ var addAliasCmd = &cobra.Command{
 			return
 		}
 
-		// Handle sudo password if flag set
-		sudoPass, _ := cmd.Flags().GetString("sudo-password")
-		if sudoPass != "" {
-			if err := cfg.SetSecret(args[0], sudoPass); err != nil {
-				fmt.Printf("⚠️  Alias added, but failed to save sudo password: %v\n", err)
+		// Handle ssh password and privileges simultaneously if flag set
+		sshPass, _ := cmd.Flags().GetString("password")
+		
+		if sshPass != "" {
+			if err := cfg.SetSecret(args[0], sshPass); err != nil {
+				fmt.Printf("⚠️  Alias added, but failed to save password: %v\n", err)
 			} else {
-				fmt.Printf("✅ Added alias '%s' for %s (with sudo password saved)\n", args[0], args[1])
+				fmt.Printf("✅ Added alias '%s' for %s (with passwords saved)\n", args[0], args[1])
 				return
 			}
 		}
@@ -94,13 +95,18 @@ var removeAliasCmd = &cobra.Command{
 }
 
 func init() {
+	// Secret Askpass Interceptor
+	if os.Getenv("MELLOW_ASKPASS_MODE") == "1" {
+		fmt.Println(os.Getenv("MELLOW_SSH_PASS"))
+		os.Exit(0)
+	}
+
 	// Add alias commands
-	addAliasCmd.Flags().String("sudo-password", "", "Optional sudo password for the server")
+	addAliasCmd.Flags().String("password", "", "Optional password for the server (used for both SSH authentication and sudo privileges)")
 	aliasCmd.AddCommand(addAliasCmd)
 	aliasCmd.AddCommand(listAliasesCmd)
 	aliasCmd.AddCommand(removeAliasCmd)
 	rootCmd.AddCommand(aliasCmd)
-
 }
 
 func executeDirectCommand() {
@@ -170,11 +176,41 @@ func executeDirectCommand() {
 	user := parts[0]
 	host := parts[1]
 
+	flags := make(map[string]interface{})
+	sshPass := ""
+
+	// Read password from environment for security (Per Alias)
+	// We check if the original target was an alias
+	if _, isAlias := cfg.GetAlias(os.Args[1]); isAlias {
+		aliasName := strings.ToUpper(os.Args[1])
+		// Normalize alias name for env var (e.g. replace - with _)
+		aliasName = strings.ReplaceAll(aliasName, "-", "_")
+		envPassVar := fmt.Sprintf("SSH_PWD_%s", aliasName)
+
+		if envPass := os.Getenv(envPassVar); envPass != "" {
+			flags["password"] = envPass
+			sshPass = envPass
+		} else {
+			// Check local secrets store for password
+			if secret, exists := cfg.GetSecret(os.Args[1]); exists { // Backwards compat from just saving to root
+				flags["password"] = secret
+				sshPass = secret
+			} else if secret, exists := cfg.GetSecret(os.Args[1] + "_sudo"); exists { // Backwards compat
+				flags["password"] = secret
+			}
+			
+			if secret, exists := cfg.GetSecret(os.Args[1] + "_ssh"); exists { // Backwards compat
+				sshPass = secret
+			}
+		}
+	}
+
 	ctx := context.Background()
 	config := ssh.Config{
-		Host: host,
-		User: user,
-		Port: 22,
+		Host:     host,
+		User:     user,
+		Port:     22,
+		Password: sshPass,
 	}
 	conn, err := ssh.Connect(config)
 	if err != nil {
@@ -188,27 +224,7 @@ func executeDirectCommand() {
 		os.Exit(1)
 	}
 
-	// Execute handler
-	// Parse args for flags
-	flags := make(map[string]interface{})
 
-	// Read sudo password from environment for security (Per Alias)
-	// We check if the original target was an alias
-	if _, isAlias := cfg.GetAlias(os.Args[1]); isAlias {
-		aliasName := strings.ToUpper(os.Args[1])
-		// Normalize alias name for env var (e.g. replace - with _)
-		aliasName = strings.ReplaceAll(aliasName, "-", "_")
-		envVar := fmt.Sprintf("SSH_SUDO_PWD_%s", aliasName)
-
-		if envPass := os.Getenv(envVar); envPass != "" {
-			flags["sudo-password"] = envPass
-		} else {
-			// Check local secrets store
-			if secret, exists := cfg.GetSecret(os.Args[1]); exists {
-				flags["sudo-password"] = secret
-			}
-		}
-	}
 
 	if err := commandToRun.Handler(ctx, conn, args, flags); err != nil {
 		fmt.Printf("❌ Command failed: %v\n", err)

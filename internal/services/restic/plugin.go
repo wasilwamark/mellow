@@ -100,7 +100,7 @@ func (p *Plugin) GetCommands() []plugin.Command {
 
 func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	fmt.Println("💾 Installing Restic...")
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 	pkgMgr := getPackageManager(conn)
 
 	// Update
@@ -132,7 +132,7 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 
 func (p *Plugin) initHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	fmt.Println("⚙️  Initializing Repository Configuration...")
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	// Interactive Input
 	var repo, id, key, password string
@@ -207,7 +207,7 @@ export RESTIC_PASSWORD="%s"
 // Database Discovery Logic
 
 func (p *Plugin) backupDbHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	// 1. Discover Database Instances (Host Services & Docker Containers)
 	fmt.Println("🔍 Scanning for database instances...")
@@ -302,7 +302,7 @@ func (p *Plugin) backupDbHandler(ctx context.Context, conn plugin.Connection, ar
 	return p.performBackup(conn, targetInfo, pass)
 }
 
-func (p *Plugin) performBackup(conn plugin.Connection, targetDB DatabaseInfo, sudoPass string) error {
+func (p *Plugin) performBackup(conn plugin.Connection, targetDB DatabaseInfo, sshPass string) error {
 	fmt.Printf("📦 Streaming backup of %s (%s)...\n", targetDB.Name, targetDB.Engine)
 
 	var dumpCmd string
@@ -355,7 +355,7 @@ func (p *Plugin) performBackup(conn plugin.Connection, targetDB DatabaseInfo, su
 	// Pipe to Restic
 	fullCmd := fmt.Sprintf("bash -c 'source /etc/mellow/restic.env && %s | restic backup --stdin --stdin-filename %s.%s'", dumpCmd, targetDB.Name, ext)
 
-	result := conn.RunSudo(fullCmd, sudoPass)
+	result := conn.RunSudo(fullCmd, sshPass)
 	if !result.Success {
 		return fmt.Errorf("backup failed: %s", result.Stderr)
 	}
@@ -384,7 +384,7 @@ type DatabaseInfo struct {
 
 // Discovery Logic
 
-func discoverInstances(conn plugin.Connection, sudoPass string) ([]DatabaseInstance, error) {
+func discoverInstances(conn plugin.Connection, sshPass string) ([]DatabaseInstance, error) {
 	var inst []DatabaseInstance
 
 	// 1. Host Services
@@ -400,7 +400,7 @@ func discoverInstances(conn plugin.Connection, sudoPass string) ([]DatabaseInsta
 
 	// 2. Docker Services
 	if conn.RunCommand("which docker", plugin.WithHideOutput()).Success {
-		result := conn.RunSudo("docker ps --format '{{.ID}}|{{.Names}}|{{.Image}}'", sudoPass)
+		result := conn.RunSudo("docker ps --format '{{.ID}}|{{.Names}}|{{.Image}}'", sshPass)
 		if result.Success {
 			lines := strings.Split(strings.TrimSpace(result.Stdout), "\n")
 			for _, line := range lines {
@@ -426,7 +426,7 @@ func discoverInstances(conn plugin.Connection, sudoPass string) ([]DatabaseInsta
 	return inst, nil
 }
 
-func detectCredentials(conn plugin.Connection, inst DatabaseInstance, sudoPass string) (string, string) {
+func detectCredentials(conn plugin.Connection, inst DatabaseInstance, sshPass string) (string, string) {
 	user := "root"
 	pass := ""
 
@@ -440,16 +440,16 @@ func detectCredentials(conn plugin.Connection, inst DatabaseInstance, sudoPass s
 	if inst.Type == "docker" {
 		// Try to extract from Env
 		if inst.Engine == "mysql" {
-			pass, _ = getDockerEnv(conn, inst.ContainerID, sudoPass, []string{"MYSQL_ROOT_PASSWORD", "MARIADB_ROOT_PASSWORD"})
+			pass, _ = getDockerEnv(conn, inst.ContainerID, sshPass, []string{"MYSQL_ROOT_PASSWORD", "MARIADB_ROOT_PASSWORD"})
 		} else if inst.Engine == "postgres" {
-			pass, _ = getDockerEnv(conn, inst.ContainerID, sudoPass, []string{"POSTGRES_PASSWORD"})
-			u, _ := getDockerEnv(conn, inst.ContainerID, sudoPass, []string{"POSTGRES_USER"})
+			pass, _ = getDockerEnv(conn, inst.ContainerID, sshPass, []string{"POSTGRES_PASSWORD"})
+			u, _ := getDockerEnv(conn, inst.ContainerID, sshPass, []string{"POSTGRES_USER"})
 			if u != "" {
 				user = u
 			}
 		} else if inst.Engine == "mongo" {
-			pass, _ = getDockerEnv(conn, inst.ContainerID, sudoPass, []string{"MONGO_INITDB_ROOT_PASSWORD"})
-			u, _ := getDockerEnv(conn, inst.ContainerID, sudoPass, []string{"MONGO_INITDB_ROOT_USERNAME"})
+			pass, _ = getDockerEnv(conn, inst.ContainerID, sshPass, []string{"MONGO_INITDB_ROOT_PASSWORD"})
+			u, _ := getDockerEnv(conn, inst.ContainerID, sshPass, []string{"MONGO_INITDB_ROOT_USERNAME"})
 			if u != "" {
 				user = u
 			}
@@ -459,7 +459,7 @@ func detectCredentials(conn plugin.Connection, inst DatabaseInstance, sudoPass s
 	return user, pass
 }
 
-func listDatabases(conn plugin.Connection, inst DatabaseInstance, user, pass, sudoPass string) ([]string, error) {
+func listDatabases(conn plugin.Connection, inst DatabaseInstance, user, pass, sshPass string) ([]string, error) {
 	var dbs []string
 	var cmd string
 
@@ -511,13 +511,13 @@ func listDatabases(conn plugin.Connection, inst DatabaseInstance, user, pass, su
 		}
 	}
 
-	result := conn.RunSudo(cmd, sudoPass)
+	result := conn.RunSudo(cmd, sshPass)
 
 	// Fallback for mongo if mongosh fails
 	if inst.Engine == "mongo" && !result.Success {
 		if strings.Contains(cmd, "mongosh") {
 			cmd = strings.ReplaceAll(cmd, "mongosh", "mongo")
-			result = conn.RunSudo(cmd, sudoPass)
+			result = conn.RunSudo(cmd, sshPass)
 		}
 	}
 
@@ -537,9 +537,9 @@ func listDatabases(conn plugin.Connection, inst DatabaseInstance, user, pass, su
 
 // Helpers
 
-func getDockerEnv(conn plugin.Connection, id, sudoPass string, keys []string) (string, error) {
+func getDockerEnv(conn plugin.Connection, id, sshPass string, keys []string) (string, error) {
 	inspectCmd := fmt.Sprintf("docker inspect %s --format '{{range .Config.Env}}{{println .}}{{end}}'", id)
-	result := conn.RunSudo(inspectCmd, sudoPass)
+	result := conn.RunSudo(inspectCmd, sshPass)
 	if !result.Success {
 		return "", fmt.Errorf("inspect failed")
 	}
@@ -564,7 +564,7 @@ func isSystemDB(name string) bool {
 }
 
 func (p *Plugin) restoreDbHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	// 1. List Snapshots
 	fmt.Println("📋 Fetching available snapshots...")
@@ -755,8 +755,8 @@ func (p *Plugin) unlockHandler(ctx context.Context, conn plugin.Connection, args
 	return nil
 }
 
-func getSudoPass(flags map[string]interface{}) string {
-	if v, ok := flags["sudo-password"]; ok {
+func getPassword(flags map[string]interface{}) string {
+	if v, ok := flags["password"]; ok {
 		return v.(string)
 	}
 	return ""

@@ -173,7 +173,7 @@ func (p *Plugin) Stop(ctx context.Context) error {
 
 func (p *Plugin) serviceActionHandler(action string) plugin.CommandHandler {
 	return func(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-		_ = getSudoPass(flags) // For consistency with other handlers
+		_ = getPassword(flags) // For consistency with other handlers
 
 		fmt.Printf("⚙️  %sing Keycloak services...\n", strings.Title(action))
 
@@ -189,7 +189,7 @@ func (p *Plugin) serviceActionHandler(action string) plugin.CommandHandler {
 	}
 }
 
-func getSudoPass(flags map[string]interface{}) string {
+func getPassword(flags map[string]interface{}) string {
 	if pass, ok := flags["sudo_password"].(string); ok {
 		return pass
 	}

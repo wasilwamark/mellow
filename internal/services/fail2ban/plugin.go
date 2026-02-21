@@ -110,7 +110,7 @@ func (p *Plugin) GetCommands() []plugin.Command {
 
 func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	fmt.Println("🛡️  Installing Fail2Ban...")
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 	pkgMgr := getPackageManager(conn)
 
 	// Update & Install
@@ -182,8 +182,8 @@ func (p *Plugin) unbanHandler(ctx context.Context, conn plugin.Connection, args 
 }
 
 // Helper
-func getSudoPass(flags map[string]interface{}) string {
-	if v, ok := flags["sudo-password"]; ok {
+func getPassword(flags map[string]interface{}) string {
+	if v, ok := flags["password"]; ok {
 		return v.(string)
 	}
 	return ""

@@ -145,7 +145,7 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 
 	// using convenience script
 	cmd := "curl -fsSL https://get.docker.com | sh"
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	result := conn.RunSudo(cmd, pass); if !result.Success {
 		return fmt.Errorf("failed to install docker: %s", result.Stderr)
@@ -203,8 +203,8 @@ func (p *Plugin) simpleComposeHandler(subcmd string) plugin.CommandHandler {
 }
 
 // Helper
-func getSudoPass(flags map[string]interface{}) string {
-	if v, ok := flags["sudo-password"]; ok {
+func getPassword(flags map[string]interface{}) string {
+	if v, ok := flags["password"]; ok {
 		return v.(string)
 	}
 	return ""

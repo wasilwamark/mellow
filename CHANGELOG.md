@@ -98,7 +98,7 @@ Initial release of Mellow, a CLI tool for simple server management over SSH.
     *   `alias remove`: Delete aliases.
 *   **Secure Sudo Handling**:
     *   Support for running root-level commands safely.
-    *   **Secrets Store**: Automatically save passwords securely to `~/.mellow/secrets.json` when adding aliases with `--sudo-password`.
+    *   **Secrets Store**: Automatically save passwords securely to `~/.mellow/secrets.json` when adding aliases with `--password`.
     *   **Environment Variables**: Support for `SSH_SUDO_PWD_<ALIAS>` for CI/CD or session-based overrides.
 *   **Direct Execution**: Run commands directly against servers using aliases or raw `user@host` strings.
 

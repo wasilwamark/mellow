@@ -218,7 +218,7 @@ func (p *Plugin) Stop(ctx context.Context) error {
 
 // Command handlers
 func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	sudoPass := getSudoPass(flags)
+	sshPass := getPassword(flags)
 	distroInfo := conn.GetDistroInfo().(*distro.DistroInfo)
 
 	fmt.Printf("ℹ️  Detected Distribution: %s %s\n", distroInfo.Name, distroInfo.Version)
@@ -242,7 +242,7 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 	pkgMgr := getPackageManager(conn)
 	updateCmd, _ := pkgMgr.Update()
 	fmt.Printf("⚡ Executing: %s\n", updateCmd)
-	if result := conn.RunSudo(updateCmd, sudoPass); !result.Success {
+	if result := conn.RunSudo(updateCmd, sshPass); !result.Success {
 		return fmt.Errorf("failed to update package list: %w", result.GetError())
 	}
 
@@ -261,7 +261,7 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 		return err
 	}
 	fmt.Printf("⚡ Executing: %s\n", installCmd)
-	if result := conn.RunSudo(installCmd, sudoPass); !result.Success {
+	if result := conn.RunSudo(installCmd, sshPass); !result.Success {
 		return fmt.Errorf("failed to install firewall: %w", result.GetError())
 	}
 
@@ -272,7 +272,7 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 	}
 
 	fmt.Printf("Setting default policy to %s...\n", defaultPolicy)
-	if result := conn.RunSudo(fmt.Sprintf("ufw default %s", defaultPolicy), sudoPass); !result.Success {
+	if result := conn.RunSudo(fmt.Sprintf("ufw default %s", defaultPolicy), sshPass); !result.Success {
 		return fmt.Errorf("failed to set default policy: %w", result.GetError())
 	}
 
@@ -284,7 +284,7 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 
 	if enableLogging {
 		fmt.Println("Enabling firewall logging...")
-		if result := conn.RunSudo("ufw logging on", sudoPass); !result.Success {
+		if result := conn.RunSudo("ufw logging on", sshPass); !result.Success {
 			return fmt.Errorf("failed to enable logging: %w", result.GetError())
 		}
 	}
@@ -297,7 +297,7 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 
 	if allowSSH {
 		fmt.Println("Allowing SSH connections...")
-		if result := conn.RunSudo("ufw allow ssh", sudoPass); !result.Success {
+		if result := conn.RunSudo("ufw allow ssh", sshPass); !result.Success {
 			return fmt.Errorf("failed to allow SSH: %w", result.GetError())
 		}
 	}
@@ -310,7 +310,7 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 }
 
 func (p *Plugin) allowHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	sudoPass := getSudoPass(flags)
+	sshPass := getPassword(flags)
 
 	if len(args) < 1 {
 		return fmt.Errorf("port or service is required")
@@ -340,7 +340,7 @@ func (p *Plugin) allowHandler(ctx context.Context, conn plugin.Connection, args 
 	}
 
 	fmt.Printf("Allowing traffic: %s\n", cmd)
-	if result := conn.RunSudo(cmd, sudoPass); !result.Success {
+	if result := conn.RunSudo(cmd, sshPass); !result.Success {
 		return fmt.Errorf("failed to allow traffic: %w", result.GetError())
 	}
 
@@ -349,7 +349,7 @@ func (p *Plugin) allowHandler(ctx context.Context, conn plugin.Connection, args 
 }
 
 func (p *Plugin) denyHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	sudoPass := getSudoPass(flags)
+	sshPass := getPassword(flags)
 
 	if len(args) < 1 {
 		return fmt.Errorf("port or service is required")
@@ -379,7 +379,7 @@ func (p *Plugin) denyHandler(ctx context.Context, conn plugin.Connection, args [
 	}
 
 	fmt.Printf("Denying traffic: %s\n", cmd)
-	if result := conn.RunSudo(cmd, sudoPass); !result.Success {
+	if result := conn.RunSudo(cmd, sshPass); !result.Success {
 		return fmt.Errorf("failed to deny traffic: %w", result.GetError())
 	}
 
@@ -416,7 +416,7 @@ func (p *Plugin) statusHandler(ctx context.Context, conn plugin.Connection, args
 }
 
 func (p *Plugin) enableHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	sudoPass := getSudoPass(flags)
+	sshPass := getPassword(flags)
 
 	fmt.Println("🔥 Enabling firewall...")
 	fmt.Println("⚠️  WARNING: This will activate the firewall!")
@@ -424,13 +424,13 @@ func (p *Plugin) enableHandler(ctx context.Context, conn plugin.Connection, args
 	// Check SSH rule before enabling to prevent lockout
 	if result := conn.RunCommand("ufw status | grep '22/tcp'", plugin.WithHideOutput()); !result.Success {
 		fmt.Println("❌ SSH rule not found! Adding SSH rule to prevent lockout...")
-		if result := conn.RunSudo("ufw allow ssh", sudoPass); !result.Success {
+		if result := conn.RunSudo("ufw allow ssh", sshPass); !result.Success {
 			return fmt.Errorf("failed to add SSH rule: %w", result.GetError())
 		}
 		fmt.Println("✅ SSH rule added")
 	}
 
-	if result := conn.RunSudo("ufw --force enable", sudoPass); !result.Success {
+	if result := conn.RunSudo("ufw --force enable", sshPass); !result.Success {
 		return fmt.Errorf("failed to enable firewall: %w", result.GetError())
 	}
 
@@ -439,11 +439,11 @@ func (p *Plugin) enableHandler(ctx context.Context, conn plugin.Connection, args
 }
 
 func (p *Plugin) disableHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	sudoPass := getSudoPass(flags)
+	sshPass := getPassword(flags)
 
 	fmt.Println("🔥 Disabling firewall...")
 
-	if result := conn.RunSudo("ufw disable", sudoPass); !result.Success {
+	if result := conn.RunSudo("ufw disable", sshPass); !result.Success {
 		return fmt.Errorf("failed to disable firewall: %w", result.GetError())
 	}
 
@@ -452,12 +452,12 @@ func (p *Plugin) disableHandler(ctx context.Context, conn plugin.Connection, arg
 }
 
 func (p *Plugin) resetHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	sudoPass := getSudoPass(flags)
+	sshPass := getPassword(flags)
 
 	fmt.Println("🔥 Resetting firewall to default settings...")
 	fmt.Println("⚠️  WARNING: This will remove all firewall rules!")
 
-	if result := conn.RunSudo("ufw --force reset", sudoPass); !result.Success {
+	if result := conn.RunSudo("ufw --force reset", sshPass); !result.Success {
 		return fmt.Errorf("failed to reset firewall: %w", result.GetError())
 	}
 
@@ -467,7 +467,7 @@ func (p *Plugin) resetHandler(ctx context.Context, conn plugin.Connection, args 
 }
 
 func (p *Plugin) deleteHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	sudoPass := getSudoPass(flags)
+	sshPass := getPassword(flags)
 
 	if len(args) < 1 {
 		return fmt.Errorf("rule number is required")
@@ -476,7 +476,7 @@ func (p *Plugin) deleteHandler(ctx context.Context, conn plugin.Connection, args
 	ruleNum := args[0]
 
 	fmt.Printf("🔥 Deleting firewall rule %s...\n", ruleNum)
-	if result := conn.RunSudo(fmt.Sprintf("ufw delete %s", ruleNum), sudoPass); !result.Success {
+	if result := conn.RunSudo(fmt.Sprintf("ufw delete %s", ruleNum), sshPass); !result.Success {
 		return fmt.Errorf("failed to delete rule: %w", result.GetError())
 	}
 
@@ -485,7 +485,7 @@ func (p *Plugin) deleteHandler(ctx context.Context, conn plugin.Connection, args
 }
 
 func (p *Plugin) loggingHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
-	sudoPass := getSudoPass(flags)
+	sshPass := getPassword(flags)
 
 	if len(args) < 1 {
 		return fmt.Errorf("logging action is required (on/off/low/medium/high/full)")
@@ -507,7 +507,7 @@ func (p *Plugin) loggingHandler(ctx context.Context, conn plugin.Connection, arg
 	}
 
 	fmt.Printf("🔥 Setting firewall logging to %s...\n", action)
-	if result := conn.RunSudo(fmt.Sprintf("ufw logging %s", action), sudoPass); !result.Success {
+	if result := conn.RunSudo(fmt.Sprintf("ufw logging %s", action), sshPass); !result.Success {
 		return fmt.Errorf("failed to set logging: %w", result.GetError())
 	}
 
@@ -516,7 +516,7 @@ func (p *Plugin) loggingHandler(ctx context.Context, conn plugin.Connection, arg
 }
 
 // Helper function to get sudo password from flags
-func getSudoPass(flags map[string]interface{}) string {
+func getPassword(flags map[string]interface{}) string {
 	if pass, ok := flags["sudo_password"].(string); ok {
 		return pass
 	}

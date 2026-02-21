@@ -17,7 +17,7 @@ Before installing Keycloak, ensure you have:
 
 ```bash
 # Add your server with sudo password
-mellow alias add myserver user@your-server-ip --sudo-password 'your-sudo-password'
+mellow alias add myserver user@your-server-ip --password 'your-sudo-password'
 ```
 
 ### 2. Install Dependencies

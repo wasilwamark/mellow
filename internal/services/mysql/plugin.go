@@ -93,7 +93,7 @@ func (p *Plugin) GetCommands() []plugin.Command {
 
 func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	fmt.Println("🗄️  Installing MariaDB Server...")
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 	pkgMgr := getPackageManager(conn)
 
 	updateCmd, _ := pkgMgr.Update()
@@ -148,7 +148,7 @@ func (p *Plugin) createDbHandler(ctx context.Context, conn plugin.Connection, ar
 		return fmt.Errorf("usage: create-db <dbname>")
 	}
 	dbName := args[0]
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	fmt.Printf("Creating database %s...\n", dbName)
 	cmd := fmt.Sprintf("mysql -u root -e 'CREATE DATABASE IF NOT EXISTS %s CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;'", dbName)
@@ -168,7 +168,7 @@ func (p *Plugin) createUserHandler(ctx context.Context, conn plugin.Connection, 
 	}
 	user := args[0]
 	dbPass := args[1]
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	fmt.Printf("Creating user %s...\n", user)
 	// Create user allowing connection from localhost
@@ -189,7 +189,7 @@ func (p *Plugin) grantHandler(ctx context.Context, conn plugin.Connection, args 
 	}
 	user := args[0]
 	dbName := args[1]
-	pass := getSudoPass(flags)
+	pass := getPassword(flags)
 
 	fmt.Printf("Granting privileges to %s on %s...\n", user, dbName)
 	cmd := fmt.Sprintf("mysql -u root -e \"GRANT ALL PRIVILEGES ON %s.* TO '%s'@'localhost'; FLUSH PRIVILEGES;\"", dbName, user)
@@ -207,8 +207,8 @@ func (p *Plugin) statusHandler(ctx context.Context, conn plugin.Connection, args
 	return conn.RunInteractive("systemctl status mariadb")
 }
 
-func getSudoPass(flags map[string]interface{}) string {
-	if v, ok := flags["sudo-password"]; ok {
+func getPassword(flags map[string]interface{}) string {
+	if v, ok := flags["password"]; ok {
 		return v.(string)
 	}
 	return ""

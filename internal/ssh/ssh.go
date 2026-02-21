@@ -74,6 +74,7 @@ type Config struct {
 	Host         string
 	User         string
 	Port         int
+	Password     string
 	IdentityFile string
 	SudoPass     string
 	Timeout      time.Duration
@@ -246,6 +247,22 @@ func (c *connection) buildSSHArgs() []string {
 	return args
 }
 
+// setupAskPass configures the environment for the command to use the built-in askpass
+func (c *connection) setupAskPass(command *exec.Cmd) {
+	if c.config.Password != "" {
+		executable, err := os.Executable()
+		if err == nil {
+			command.Env = append(os.Environ(),
+				"SSH_ASKPASS="+executable,
+				"SSH_ASKPASS_REQUIRE=force",
+				"DISPLAY=dummy:0",
+				"MELLOW_ASKPASS_MODE=1",
+				"MELLOW_SSH_PASS="+c.config.Password,
+			)
+		}
+	}
+}
+
 // runCommandWithContext executes a command with context
 func (c *connection) runCommandWithContext(ctx context.Context, cmd string) plugin.Result {
 	startTime := time.Now()
@@ -259,6 +276,7 @@ func (c *connection) runCommandWithContext(ctx context.Context, cmd string) plug
 
 	// Create command with context if timeout is specified
 	command := exec.CommandContext(ctx, "ssh", sshArgs...)
+	c.setupAskPass(command)
 
 	// Set up buffers
 	var stdout, stderr bytes.Buffer
@@ -340,6 +358,7 @@ func (c *connection) RunInteractive(cmd string) error {
 	)
 
 	command := exec.Command("ssh", sshArgs...)
+	c.setupAskPass(command)
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 	command.Stdin = os.Stdin
@@ -356,6 +375,7 @@ func (c *connection) Shell() error {
 	)
 
 	command := exec.Command("ssh", sshArgs...)
+	c.setupAskPass(command)
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 	command.Stdin = os.Stdin

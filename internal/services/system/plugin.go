@@ -144,17 +144,17 @@ func (p *Plugin) checkSudoResult(result plugin.Result, flags map[string]interfac
 	}
 
 	// Check if sudo password was provided
-	sudoPass, _ := flags["sudo-password"].(string)
+	sshPass, _ := flags["password"].(string)
 
 	errMsg := fmt.Sprintf("failed to execute command: %s", result.Stderr)
 
 	// If it looks like a sudo/permission error
 	if strings.Contains(result.Stderr, "sudo") || strings.Contains(result.Stderr, "permission") || strings.Contains(result.Stderr, "password") {
-		if sudoPass == "" {
+		if sshPass == "" {
 			errMsg += "\n\n❌ Root privileges required.\n"
 			errMsg += "Resolution Tips:\n"
 			errMsg += "1. Set environment variable: export SSH_SUDO_PWD_<ALIAS>='your-password'\n"
-			errMsg += "2. OR Update alias with password: mellow alias add <name> <user@host> --sudo-password 'pass' (will update existing)\n"
+			errMsg += "2. OR Update alias with password: mellow alias add <name> <user@host> --password 'pass' (will update existing)\n"
 		} else {
 			errMsg += "\n\n❌ Sudo authentication failed. Check your password."
 		}
@@ -181,11 +181,11 @@ func (p *Plugin) logCommand(cmd string) {
 func (p *Plugin) handleUpdate(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	fmt.Println("🔄 Updating package lists...")
 
-	sudoPass, _ := flags["sudo-password"].(string)
+	sshPass, _ := flags["password"].(string)
 	pkgMgr := p.getPackageManager(conn)
 	cmd, _ := pkgMgr.Update()
 	p.logCommand(cmd)
-	result := conn.RunSudo(cmd, sudoPass)
+	result := conn.RunSudo(cmd, sshPass)
 
 	if err := p.checkSudoResult(result, flags); err != nil {
 		return err
@@ -198,11 +198,11 @@ func (p *Plugin) handleUpdate(ctx context.Context, conn plugin.Connection, args 
 func (p *Plugin) handleUpgrade(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	fmt.Println("⬆️  Upgrading packages...")
 
-	sudoPass, _ := flags["sudo-password"].(string)
+	sshPass, _ := flags["password"].(string)
 	pkgMgr := p.getPackageManager(conn)
 	cmd, _ := pkgMgr.Upgrade()
 	p.logCommand(cmd)
-	result := conn.RunSudo(cmd, sudoPass)
+	result := conn.RunSudo(cmd, sshPass)
 	if err := p.checkSudoResult(result, flags); err != nil {
 		return err
 	}
@@ -214,11 +214,11 @@ func (p *Plugin) handleUpgrade(ctx context.Context, conn plugin.Connection, args
 func (p *Plugin) handleFullUpgrade(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	fmt.Println("🚀 Performing full system upgrade...")
 
-	sudoPass, _ := flags["sudo-password"].(string)
+	sshPass, _ := flags["password"].(string)
 	pkgMgr := p.getPackageManager(conn)
 	cmd, _ := pkgMgr.DistUpgrade()
 	p.logCommand(cmd)
-	result := conn.RunSudo(cmd, sudoPass)
+	result := conn.RunSudo(cmd, sshPass)
 	if err := p.checkSudoResult(result, flags); err != nil {
 		return err
 	}
@@ -230,11 +230,11 @@ func (p *Plugin) handleFullUpgrade(ctx context.Context, conn plugin.Connection, 
 func (p *Plugin) handleAutoremove(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	fmt.Println("🧹 Removing unused packages...")
 
-	sudoPass, _ := flags["sudo-password"].(string)
+	sshPass, _ := flags["password"].(string)
 	pkgMgr := p.getPackageManager(conn)
 	cmd, _ := pkgMgr.Autoremove()
 	p.logCommand(cmd)
-	result := conn.RunSudo(cmd, sudoPass)
+	result := conn.RunSudo(cmd, sshPass)
 	if err := p.checkSudoResult(result, flags); err != nil {
 		return err
 	}
@@ -256,14 +256,14 @@ func (p *Plugin) handleInstall(ctx context.Context, conn plugin.Connection, args
 	packages := strings.Join(args, " ")
 	fmt.Printf("📦 Installing: %s...\n", packages)
 
-	sudoPass, _ := flags["sudo-password"].(string)
+	sshPass, _ := flags["password"].(string)
 	pkgMgr := p.getPackageManager(conn)
 	cmd, err := pkgMgr.Install(args...)
 	if err != nil {
 		return err
 	}
 	p.logCommand(cmd)
-	result := conn.RunSudo(cmd, sudoPass)
+	result := conn.RunSudo(cmd, sshPass)
 
 	if err := p.checkSudoResult(result, flags); err != nil {
 		return err
@@ -281,14 +281,14 @@ func (p *Plugin) handleUninstall(ctx context.Context, conn plugin.Connection, ar
 	packages := strings.Join(args, " ")
 	fmt.Printf("🗑️  Uninstalling: %s...\n", packages)
 
-	sudoPass, _ := flags["sudo-password"].(string)
+	sshPass, _ := flags["password"].(string)
 	pkgMgr := p.getPackageManager(conn)
 	cmd, err := pkgMgr.Remove(args...)
 	if err != nil {
 		return err
 	}
 	p.logCommand(cmd)
-	result := conn.RunSudo(cmd, sudoPass)
+	result := conn.RunSudo(cmd, sshPass)
 
 	if err := p.checkSudoResult(result, flags); err != nil {
 		return err
