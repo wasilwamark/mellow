@@ -62,10 +62,8 @@ Mellow connects via SSH, executes commands, and disconnects. Simple as that.
 - [WordPress](internal/services/wordpress): CMS
 - [Keycloak](internal/services/keycloak): Identity
 - [Docker](internal/services/docker): Containers
-<<<<<<< HEAD
-=======
+- [Kong](internal/services/kong): API Gateway
 - [Runtimes](internal/services/runtimes): Language Runtimes
->>>>>>> 7f98f99 (release: v0.0.6)
 
 ## Example Usage
 

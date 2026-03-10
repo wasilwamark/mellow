@@ -8,6 +8,7 @@ import (
 	"github.com/wasilwamark/mellow/internal/services/fail2ban"
 	"github.com/wasilwamark/mellow/internal/services/firewall"
 	"github.com/wasilwamark/mellow/internal/services/keycloak"
+	"github.com/wasilwamark/mellow/internal/services/kong"
 	"github.com/wasilwamark/mellow/internal/services/mysql"
 	"github.com/wasilwamark/mellow/internal/services/nginx"
 	"github.com/wasilwamark/mellow/internal/services/redis"
@@ -38,4 +39,5 @@ func initializeBuiltinPlugins() {
 	plugin.RegisterBuiltin("github.com/wasilwamark/mellow/services/restic", &restic.Plugin{})
 	plugin.RegisterBuiltin("github.com/wasilwamark/mellow/services/runtimes", &runtimes.Plugin{})
 	plugin.RegisterBuiltin("github.com/wasilwamark/mellow/services/wordpress", &wordpress.Plugin{})
+	plugin.RegisterBuiltin("github.com/wasilwamark/mellow/services/kong", &kong.Plugin{})
 }
