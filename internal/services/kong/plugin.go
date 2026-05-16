@@ -330,7 +330,7 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 	fmt.Println("   🌐 Proxy HTTP:  http://localhost:8000")
 	fmt.Println("   🔒 Proxy HTTPS: http://localhost:8443")
 	fmt.Println("   ⚙️  Admin API:   http://localhost:8001")
-	fmt.Println("   📊 Manager UI:  http://localhost:8002")
+	fmt.Println("   📊 Manager UI:  http://localhost:8002 (Kong Manager)")
 	fmt.Printf("   🗄️  PostgreSQL: localhost:%s\n", dbPort)
 	fmt.Println("\n🔐 Default Credentials:")
 	fmt.Println("   PostgreSQL User: kong")
@@ -1046,6 +1046,7 @@ services:
       - "8443:8443"
       - "8001:8001"
       - "8444:8444"
+      - "8002:8002"
     environment:
       KONG_DATABASE: postgres
       KONG_PG_HOST: kong-db
@@ -1058,6 +1059,7 @@ services:
       KONG_ADMIN_ERROR_LOG: /dev/stderr
       KONG_ADMIN_LISTEN: "0.0.0.0:8001"
       KONG_ADMIN_GUI_URL: "http://localhost:8002"
+      KONG_ADMIN_GUI_LISTEN: "0.0.0.0:8002"
     depends_on:
       kong-db:
         condition: service_healthy
@@ -1071,18 +1073,9 @@ services:
     volumes:
       - ./kong.conf:/etc/kong/kong.conf:ro
 
-  konga:
-    image: pantsel/konga:latest
-    container_name: konga-ui
-    restart: unless-stopped
-    networks:
-      - kong-net
-    ports:
-      - "8002:1337"
-    environment:
-      NODE_ENV: production
-    depends_on:
-      - kong
+    # Kong Manager
+    # Manager is bundled with Kong Gateway OSS, usually on port 8002
+    # No extra container needed.
 
 volumes:
   kong-db-data:
