@@ -44,28 +44,27 @@ mellow myserver system update
 
 Mellow connects via SSH, executes commands, and disconnects. Simple as that.
 
-## Plugins
+## Supported Services
 
-**Core**
+Mellow includes a variety of plugins for managing services. To see all available commands for a service, run `mellow [server] [service] --help`.
 
-- [System](internal/services/system): OS package management
+| Service | Description | Usage Example |
+| :--- | :--- | :--- |
+| **System** | OS package management | `mellow <server> system update` |
+| **Nginx** | Web server | `mellow <server> nginx install` |
+| **MySQL** | Database | `mellow <server> mysql install` |
+| **Redis** | In-memory store | `mellow <server> redis install` |
+| **Fail2Ban** | Security/Intrusion prevention | `mellow <server> fail2ban install` |
+| **Wireguard** | VPN management | `mellow <server> wireguard install` |
+| **Restic** | Backups | `mellow <server> restic init` |
+| **Firewall** | Firewall (UFW/Firewalld) | `mellow <server> firewall allow 80` |
+| **WordPress**| CMS | `mellow <server> wordpress install` |
+| **Keycloak** | Identity provider | `mellow <server> keycloak install` |
+| **Docker** | Containerization | `mellow <server> docker install` |
+| **Kong** | API Gateway | `mellow <server> kong install` |
+| **Runtimes**| Language Runtimes | `mellow <server> runtime install node 18` |
 
-**Services**
-
-- [Nginx](internal/services/nginx): Web server
-- [MySQL/MariaDB](internal/services/mysql): Database
-- [Redis](internal/services/redis): Cache
-- [Fail2Ban](internal/services/fail2ban): Security
-- [Wireguard](internal/services/wireguard): VPN
-- [Restic](internal/services/restic): Backup
-- [Firewall](internal/services/firewall): Firewall (UFW/Firewalld)
-- [WordPress](internal/services/wordpress): CMS
-- [Keycloak](internal/services/keycloak): Identity
-- [Docker](internal/services/docker): Containers
-- [Kong](internal/services/kong): API Gateway
-- [Runtimes](internal/services/runtimes): Language Runtimes
-
-## Example Usage
+## Common Commands
 
 ```bash
 # System updates
@@ -84,7 +83,3 @@ mellow myserver mysql create-db myapp
 mellow myserver firewall install
 mellow myserver firewall allow 80
 ```
-
-## Contributing
-
-Fork, branch, PR.
