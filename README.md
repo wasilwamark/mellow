@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<img src="./mellow-logo.png" width="200" alt="Mellow Logo">
+<img src="./mellow.png" width="200" alt="Mellow Logo">
 
 **A CLI tool for Easy Server Management**
 
