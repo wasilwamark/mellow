@@ -9,10 +9,10 @@ import (
 // SSHConfig holds SSH-specific configuration that extends the Mellow plugin config
 type SSHConfig struct {
 	// Basic connection info
-	Host     string
-	User     string
-	Port     int
-	KeyPath  string
+	Host    string
+	User    string
+	Port    int
+	KeyPath string
 
 	// SSH-specific connection options
 	StrictHostKeyChecking bool
@@ -83,12 +83,12 @@ func WithPort(port int) SSHOption {
 // NewSSHConfig creates a default SSH configuration
 func NewSSHConfig() *SSHConfig {
 	return &SSHConfig{
-		Port:                   22,
-		StrictHostKeyChecking:  false,
-		ServerAliveInterval:    60,
-		ServerAliveCountMax:    3,
-		ConnectTimeout:         30 * time.Second,
-		EnvVars:                make(map[string]string),
+		Port:                  22,
+		StrictHostKeyChecking: false,
+		ServerAliveInterval:   60,
+		ServerAliveCountMax:   3,
+		ConnectTimeout:        30 * time.Second,
+		EnvVars:               make(map[string]string),
 	}
 }
 
@@ -106,10 +106,10 @@ func (c *SSHConfig) Clone() *SSHConfig {
 		User:                  c.User,
 		Port:                  c.Port,
 		KeyPath:               c.KeyPath,
-		StrictHostKeyChecking:  c.StrictHostKeyChecking,
-		ServerAliveInterval:    c.ServerAliveInterval,
-		ServerAliveCountMax:    c.ServerAliveCountMax,
-		ConnectTimeout:         c.ConnectTimeout,
+		StrictHostKeyChecking: c.StrictHostKeyChecking,
+		ServerAliveInterval:   c.ServerAliveInterval,
+		ServerAliveCountMax:   c.ServerAliveCountMax,
+		ConnectTimeout:        c.ConnectTimeout,
 		HideOutput:            c.HideOutput,
 		Timeout:               c.Timeout,
 		WorkingDir:            c.WorkingDir,

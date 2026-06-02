@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/wasilwamark/mellow/internal/config"
-	
+
 	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 

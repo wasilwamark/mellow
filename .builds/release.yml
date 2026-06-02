@@ -1,0 +1,26 @@
+image: ubuntu
+packages:
+  - go
+  - goreleaser
+sources:
+  - https://git.sr.ht/~rerk/mellow
+secrets:
+  # Add your secret containing GITHUB_TOKEN (needed for goreleaser to publish to GitHub if desired)
+  - 00000000-0000-0000-0000-000000000000
+tasks:
+  - setup: |
+      cd mellow
+      go mod download
+  - build: |
+      cd mellow
+      go build ./...
+  - release: |
+      cd mellow
+      # Mimics the GitHub Action release job
+      if git describe --exact-match --tags HEAD >/dev/null 2>&1; then
+        # If this is a tag, run a clean release
+        goreleaser release --clean
+      else
+        # Otherwise just build a snapshot
+        goreleaser build --clean --snapshot
+      fi

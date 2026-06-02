@@ -47,7 +47,7 @@ var addAliasCmd = &cobra.Command{
 
 		// Handle ssh password and privileges simultaneously if flag set
 		sshPass, _ := cmd.Flags().GetString("password")
-		
+
 		if sshPass != "" {
 			if err := cfg.SetSecret(args[0], sshPass); err != nil {
 				fmt.Printf("⚠️  Alias added, but failed to save password: %v\n", err)
@@ -198,7 +198,7 @@ func executeDirectCommand() {
 			} else if secret, exists := cfg.GetSecret(os.Args[1] + "_sudo"); exists { // Backwards compat
 				flags["password"] = secret
 			}
-			
+
 			if secret, exists := cfg.GetSecret(os.Args[1] + "_ssh"); exists { // Backwards compat
 				sshPass = secret
 			}
@@ -223,8 +223,6 @@ func executeDirectCommand() {
 		fmt.Printf("❌ Failed to establish SSH connection manually (Connect returned false)\n")
 		os.Exit(1)
 	}
-
-
 
 	if err := commandToRun.Handler(ctx, conn, args, flags); err != nil {
 		fmt.Printf("❌ Command failed: %v\n", err)

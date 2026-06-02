@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	
+
 	"github.com/wasilwamark/mellow/pkg/plugin"
 )
 
@@ -40,12 +40,11 @@ func (p *Plugin) Stop(ctx context.Context) error {
 	return nil
 }
 
-
-
 func (p *Plugin) GetRootCommand() *cobra.Command {
 	return nil
 }
-	// Enhanced plugin interface methods
+
+// Enhanced plugin interface methods
 func (p *Plugin) Validate() error {
 	// TODO: Add plugin-specific validation logic
 	return nil
@@ -82,7 +81,6 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 		},
 	}
 }
-
 
 func (p *Plugin) GetCommands() []plugin.Command {
 	return []plugin.Command{
@@ -147,13 +145,15 @@ func (p *Plugin) installHandler(ctx context.Context, conn plugin.Connection, arg
 	cmd := "curl -fsSL https://get.docker.com | sh"
 	pass := getPassword(flags)
 
-	result := conn.RunSudo(cmd, pass); if !result.Success {
+	result := conn.RunSudo(cmd, pass)
+	if !result.Success {
 		return fmt.Errorf("failed to install docker: %s", result.Stderr)
 	}
 
 	// Add user to docker group
 	fmt.Println("👤 Adding user to docker group...")
-	result = conn.RunSudo("usermod -aG docker $USER", pass); if !result.Success {
+	result = conn.RunSudo("usermod -aG docker $USER", pass)
+	if !result.Success {
 		fmt.Printf("⚠️  Failed to add user to docker group: %s\n", result.Stderr)
 	} else {
 		fmt.Println("✅ User added to docker group (requires re-login to take effect)")

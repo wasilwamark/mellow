@@ -3,8 +3,8 @@ package plugin
 import (
 	"fmt"
 	"regexp"
-	"strings"
 	"runtime"
+	"strings"
 
 	"github.com/Masterminds/semver/v3"
 )
@@ -223,10 +223,10 @@ func (v *Validator) validateCompatibility(plugin Plugin) ValidationErrors {
 			})
 		} else if !minVersion.Check(currentVersion) {
 			errors = append(errors, ValidationError{
-				Field:   "compatibility",
+				Field: "compatibility",
 				Message: fmt.Sprintf("plugin requires Mellow version %s, but current version is %s",
 					compat.MinVPSInitVersion, v.vpsInitVersion),
-				Code:    "INCOMPATIBLE_MELLOW_VERSION",
+				Code: "INCOMPATIBLE_MELLOW_VERSION",
 			})
 		}
 	}
@@ -247,10 +247,10 @@ func (v *Validator) validateCompatibility(plugin Plugin) ValidationErrors {
 			})
 		} else if !maxVersion.Check(currentVersion) {
 			errors = append(errors, ValidationError{
-				Field:   "compatibility",
+				Field: "compatibility",
 				Message: fmt.Sprintf("plugin requires Mellow version <= %s, but current version is %s",
 					compat.MaxVPSInitVersion, v.vpsInitVersion),
-				Code:    "INCOMPATIBLE_MELLOW_VERSION",
+				Code: "INCOMPATIBLE_MELLOW_VERSION",
 			})
 		}
 	}
@@ -385,37 +385,37 @@ func (v *Validator) ValidatePluginMetadata(metadata PluginMetadata) ValidationEr
 	// Validate checksum format if present
 	// Note: Checksum field not available in core.PluginMetadata
 	/*
-	if metadata.Checksum != "" {
-		if !regexp.MustCompile(`^[a-fA-F0-9]{64}$`).MatchString(metadata.Checksum) {
-			errors = append(errors, ValidationError{
-				Field:   "metadata.checksum",
-				Message: "checksum must be a valid SHA256 hash",
-				Code:    "INVALID_CHECKSUM",
-			})
+		if metadata.Checksum != "" {
+			if !regexp.MustCompile(`^[a-fA-F0-9]{64}$`).MatchString(metadata.Checksum) {
+				errors = append(errors, ValidationError{
+					Field:   "metadata.checksum",
+					Message: "checksum must be a valid SHA256 hash",
+					Code:    "INVALID_CHECKSUM",
+				})
+			}
 		}
-	}
 	*/
 
 	// Validate trust level
 	// Note: TrustLevel field not available in core.PluginMetadata
 	/*
-	if metadata.TrustLevel != "" {
-		validTrustLevels := []string{"official", "community", "verified", "untrusted"}
-		valid := false
-		for _, level := range validTrustLevels {
-			if metadata.TrustLevel == level {
-				valid = true
-				break
+		if metadata.TrustLevel != "" {
+			validTrustLevels := []string{"official", "community", "verified", "untrusted"}
+			valid := false
+			for _, level := range validTrustLevels {
+				if metadata.TrustLevel == level {
+					valid = true
+					break
+				}
+			}
+			if !valid {
+				errors = append(errors, ValidationError{
+					Field:   "metadata.trust_level",
+					Message: fmt.Sprintf("trust level must be one of: %s", strings.Join(validTrustLevels, ", ")),
+					Code:    "INVALID_TRUST_LEVEL",
+				})
 			}
 		}
-		if !valid {
-			errors = append(errors, ValidationError{
-				Field:   "metadata.trust_level",
-				Message: fmt.Sprintf("trust level must be one of: %s", strings.Join(validTrustLevels, ", ")),
-				Code:    "INVALID_TRUST_LEVEL",
-			})
-		}
-	}
 	*/
 
 	return errors
@@ -427,9 +427,9 @@ func GetTrustLevel(metadata PluginMetadata) string {
 	// Since TrustLevel field is not available in core.PluginMetadata,
 	// we'll determine it based on repository pattern
 	/*
-	if metadata.TrustLevel != "" {
-		return metadata.TrustLevel
-	}
+		if metadata.TrustLevel != "" {
+			return metadata.TrustLevel
+		}
 	*/
 
 	// Auto-determine trust level based on repository

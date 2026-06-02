@@ -186,14 +186,14 @@ type KongService struct {
 
 // KongRoute represents a Kong route configuration
 type KongRoute struct {
-	Name       string   `json:"name"`
-	ServiceID  string   `json:"service"`
-	Paths      []string `json:"paths,omitempty"`
-	Methods    []string `json:"methods,omitempty"`
-	Hosts      []string `json:"hosts,omitempty"`
-	Protocols  []string `json:"protocols,omitempty"`
-	StripPath  bool     `json:"strip_path,omitempty"`
-	PreserveHost bool   `json:"preserve_host,omitempty"`
+	Name         string   `json:"name"`
+	ServiceID    string   `json:"service"`
+	Paths        []string `json:"paths,omitempty"`
+	Methods      []string `json:"methods,omitempty"`
+	Hosts        []string `json:"hosts,omitempty"`
+	Protocols    []string `json:"protocols,omitempty"`
+	StripPath    bool     `json:"strip_path,omitempty"`
+	PreserveHost bool     `json:"preserve_host,omitempty"`
 }
 
 // KongPlugin represents a Kong plugin configuration
@@ -206,11 +206,11 @@ type KongPlugin struct {
 }
 
 const (
-	kongDir          = "/opt/kong"
-	kongComposeFile  = kongDir + "/docker-compose.yml"
-	kongConfFile     = kongDir + "/kong.conf"
-	kongAdminURL     = "http://localhost:8001"
-	kongNetworkName  = "kong-net"
+	kongDir           = "/opt/kong"
+	kongComposeFile   = kongDir + "/docker-compose.yml"
+	kongConfFile      = kongDir + "/kong.conf"
+	kongAdminURL      = "http://localhost:8001"
+	kongNetworkName   = "kong-net"
 	kongDefaultDBPort = "15432" // Use unique port to avoid conflicts
 )
 

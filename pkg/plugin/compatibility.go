@@ -112,7 +112,7 @@ func (cc *CompatibilityChecker) checkPlatformCompatibility(compat Compatibility)
 
 		// Check for wildcard matches (e.g., "linux/*" or "*/amd64")
 		if platform == fmt.Sprintf("%s/*", cc.currentOS) ||
-		   platform == fmt.Sprintf("*/%s", cc.currentArch) {
+			platform == fmt.Sprintf("*/%s", cc.currentArch) {
 			return nil // Platform wildcard matches
 		}
 	}
@@ -170,7 +170,7 @@ type DependencyGraph struct {
 
 // PluginNode represents a plugin in the dependency graph
 type PluginNode struct {
-	Plugin      Plugin
+	Plugin       Plugin
 	Dependencies map[string]string // name -> version constraint
 	Dependents   []string          // names of dependent plugins
 }

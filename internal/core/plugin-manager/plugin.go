@@ -180,7 +180,6 @@ func (p *Plugin) handleList(ctx context.Context, conn plugin.Connection, args []
 	return nil
 }
 
-
 func (p *Plugin) handleInfo(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	if len(args) < 1 {
 		return fmt.Errorf("plugin name is required")
@@ -223,7 +222,6 @@ func (p *Plugin) handleInfo(ctx context.Context, conn plugin.Connection, args []
 	return nil
 }
 
-
 // Cobra command runners
 func (p *Plugin) runList(cmd *cobra.Command, args []string) error {
 	if p.registry == nil {
@@ -243,7 +241,6 @@ func (p *Plugin) runList(cmd *cobra.Command, args []string) error {
 
 	return nil
 }
-
 
 func (p *Plugin) runInfo(cmd *cobra.Command, args []string) error {
 	if p.registry == nil {
@@ -285,8 +282,6 @@ func (p *Plugin) runInfo(cmd *cobra.Command, args []string) error {
 
 	return nil
 }
-
-
 
 func (p *Plugin) handleValidate(ctx context.Context, conn plugin.Connection, args []string, flags map[string]interface{}) error {
 	if p.registry == nil {
@@ -335,7 +330,6 @@ func (p *Plugin) handleValidate(ctx context.Context, conn plugin.Connection, arg
 	fmt.Printf("\n✅ All %d plugins validated successfully\n", len(plugins))
 	return nil
 }
-
 
 func (p *Plugin) runValidate(cmd *cobra.Command, args []string) error {
 	flags := make(map[string]interface{})
