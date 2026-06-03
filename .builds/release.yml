@@ -4,9 +4,9 @@ packages:
   - goreleaser
 sources:
   - https://git.sr.ht/~wasilwa/mellow
-secrets:
-  # Add your secret containing GITHUB_TOKEN (needed for goreleaser to publish to GitHub if desired)
-  - 00000000-0000-0000-0000-000000000000
+
+artifacts:
+  - mellow-release.tar.gz
 tasks:
   - setup: |
       cd mellow
@@ -17,10 +17,11 @@ tasks:
   - release: |
       cd mellow
       if git describe --exact-match --tags HEAD >/dev/null 2>&1; then
-        goreleaser release --clean
+        goreleaser release --clean --skip=publish
       elif [ "$GIT_REF" = "refs/heads/main" ]; then
         git tag "v$(date +'%Y%m%d%H%M%S')"
-        goreleaser release --clean
+        goreleaser release --clean --skip=publish
       else
-        goreleaser build --clean --snapshot
+        goreleaser release --clean --snapshot --skip=publish
       fi
+      tar -czf ../mellow-release.tar.gz dist/
