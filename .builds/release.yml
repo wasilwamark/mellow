@@ -3,7 +3,7 @@ packages:
   - go
   - goreleaser
 sources:
-  - https://git.sr.ht/~rerk/mellow
+  - https://git.sr.ht/~wasilwa/mellow
 secrets:
   # Add your secret containing GITHUB_TOKEN (needed for goreleaser to publish to GitHub if desired)
   - 00000000-0000-0000-0000-000000000000
