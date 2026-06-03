@@ -16,12 +16,9 @@ tasks:
       go build ./...
   - release: |
       cd mellow
-      if git describe --exact-match --tags HEAD >/dev/null 2>&1; then
+      if git describe --exact-match --tags HEAD >/dev/null 2>&1 && [[ "$(git describe --exact-match --tags HEAD)" == v* ]]; then
         goreleaser release --clean --skip=publish
-      elif [ "$GIT_REF" = "refs/heads/main" ]; then
-        git tag "v$(date +'%Y%m%d%H%M%S')"
-        goreleaser release --clean --skip=publish
+        tar -czf ../mellow-release.tar.gz dist/
       else
-        goreleaser release --clean --snapshot --skip=publish
+        goreleaser build --clean --snapshot
       fi
-      tar -czf ../mellow-release.tar.gz dist/
