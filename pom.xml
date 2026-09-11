@@ -26,7 +26,7 @@
         <assertj.version>3.27.3</assertj.version>
         <testcontainers.version>1.20.4</testcontainers.version>
 
-        <native.maven.plugin.version>0.10.3</native.maven.plugin.version>
+        <native.maven.plugin.version>1.1.12</native.maven.plugin.version>
         <jacoco.version>0.8.15</jacoco.version>
     </properties>
 
@@ -189,6 +189,8 @@
                             <mainClass>com.acaciawave.mellow.Main</mainClass>
                             <buildArgs>
                                 <buildArg>--no-fallback</buildArg>
+                                <buildArg>--initialize-at-build-time=org.apache.sshd.common.file.root.RootedFileSystemProvider</buildArg>
+                                <buildArg>--initialize-at-build-time=org.slf4j</buildArg>
                                 <buildArg>-H:+ReportExceptionStackTraces</buildArg>
                             </buildArgs>
                         </configuration>

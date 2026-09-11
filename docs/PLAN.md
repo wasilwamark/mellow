@@ -29,7 +29,7 @@
 | Unit tests (69) | ✅ | `src/test/java` |
 | SSH integration test (live) | ⏳ Phase 1 (no Docker here) | — |
 | JLine interactive REPL + completion | ✅ | `com/acaciawave/mellow/cli/Repl.java` |
-| GraalVM native image | ⛔ Phase 5 (needs GraalVM for JDK 25) | not yet installed |
+| GraalVM native image | ✅ built with GraalVM for JDK 25 | `pom.xml` (`-Pnative`), `.builds/ci.yml` |
 | CI / release matrix | ⛔ Phase 6 | — |
 
 **Run it:**
@@ -282,8 +282,10 @@ Timeout semantics preserved: `ConnectTimeout=10`, `ServerAliveInterval=30` →
 - [x] Replaced ad-hoc `fmt.Scanln` flows with JLine-backed `Prompts`
 
 ### Phase 5 — GraalVM native image
-- [ ] Full `native-image` build with correct `reflect/resource-config.json`
-- [ ] JLine + MINA SSHD + Jackson verified under native
+- [x] Full `native-image` build (GraalVM for JDK 25; JLine ships its own metadata,
+      build-time init added for MINA SSHD `RootedFileSystemProvider` and `org.slf4j`)
+- [x] JLine + MINA SSHD + Jackson verified under native (33 MB binary; `--version`,
+      `--help`, `alias` round-trip and error paths smoke-tested)
 - [ ] `mvn -Pnative test` (JUnit runs on JVM; native verified via CLI smoke suite)
 
 ### Phase 6 — CI / release

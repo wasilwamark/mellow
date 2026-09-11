@@ -3,6 +3,8 @@ packages:
   - maven
   - curl
   - ca-certificates
+  - build-essential # C toolchain required to link the GraalVM native image
+  - zlib1g-dev # libz.a, required to link the GraalVM native image
 sources:
   - git@git.sr.ht:~wasilwa/mellow
 environment:
@@ -12,7 +14,7 @@ tasks:
   - setup-jdk: |
       set -eu
       # Ubuntu 24.04 ships JDK 21; Mellow targets Java 25, so fetch Temurin 25
-      # from the Adoptium API (the same "download a JDK" approach used in
+      # from the Adoptium API (the same "download a toolchain" approach used in
       # hiredmonday's CI for Mandrel).
       if [ ! -x "$JAVA_HOME/bin/java" ]; then
         mkdir -p "$JAVA_HOME"
@@ -43,5 +45,24 @@ tasks:
           printf "lines:    %d/%d (%.1f%%)\n", lc, lt, (lt > 0 ? 100 * lc / lt : 0);
           printf "branches: %d/%d (%.1f%%)\n", bc, bt, (bt > 0 ? 100 * bc / bt : 0);
         }' target/site/jacoco/jacoco.csv
-    artifacts:
-      - mellow/target/site/jacoco
+  - setup-graalvm: |
+      set -eu
+      export GRAALVM_HOME="$HOME/graalvm"
+      # GraalVM for JDK 25 — matching the compiler release so the native image
+      # can consume the Java 25 class files.
+      if [ ! -x "$GRAALVM_HOME/bin/native-image" ]; then
+        mkdir -p "$GRAALVM_HOME"
+        curl -fsSL -o /tmp/graalvm.tar.gz \
+          "https://download.oracle.com/graalvm/25/latest/graalvm-jdk-25_linux-x64_bin.tar.gz"
+        tar xzf /tmp/graalvm.tar.gz -C "$GRAALVM_HOME" --strip-components=1
+        rm -f /tmp/graalvm.tar.gz
+      fi
+      "$GRAALVM_HOME/bin/java" -version
+      "$GRAALVM_HOME/bin/native-image" --version
+  - native: |
+      set -eu
+      export JAVA_HOME="$HOME/graalvm"
+      export PATH="$JAVA_HOME/bin:$PATH"
+      cd mellow
+      mvn -B -DskipTests -Pnative package
+      ls -lh target/mellow
