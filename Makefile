@@ -22,7 +22,7 @@ TEST      ?=
 
 .DEFAULT_GOAL := build
 
-.PHONY: help build package jar test test-one verify run install uninstall native deps hooks version clean distclean
+.PHONY: help build package jar test test-one verify coverage run install uninstall native deps hooks version clean distclean
 
 # ---- help ------------------------------------------------------------------
 help: ## Show this help
@@ -48,6 +48,10 @@ test-one: ## Run a single test class: make test-one TEST=MellowConfigTest
 
 verify: ## Run the full Maven verify lifecycle
 	$(MVN) $(MVN_FLAGS) verify
+
+coverage: ## Run tests and generate the JaCoCo report (target/site/jacoco)
+	$(MVN) $(MVN_FLAGS) -q verify
+	@echo "📊 Coverage report: target/site/jacoco/index.html"
 
 run: package ## Build and run (pass arguments with ARGS="...")
 	$(JAVA_BIN) -jar $(JAR) $(ARGS)

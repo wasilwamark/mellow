@@ -103,6 +103,7 @@ mellow myserver firewall allow 80
 
 ```bash
 make test          # or: mvn test
+make coverage      # tests + JaCoCo report (target/site/jacoco)
 make package       # or: mvn -DskipTests package
 make run           # build and launch
 ```

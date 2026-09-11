@@ -27,6 +27,7 @@
         <testcontainers.version>1.20.4</testcontainers.version>
 
         <native.maven.plugin.version>0.10.3</native.maven.plugin.version>
+        <jacoco.version>0.8.15</jacoco.version>
     </properties>
 
     <dependencies>
@@ -98,6 +99,28 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.2</version>
+            </plugin>
+
+            <!-- Code coverage: report at target/site/jacoco (see `mvn verify`) -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- Runnable fat jar: java -jar target/mellow.jar -->

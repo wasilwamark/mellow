@@ -1,0 +1,47 @@
+image: ubuntu/24.04
+packages:
+  - maven
+  - curl
+  - ca-certificates
+sources:
+  - git@git.sr.ht:~wasilwa/mellow
+environment:
+  JAVA_HOME: /home/build/jdk25
+  MAVEN_OPTS: -Dmaven.repo.local=/home/build/.m2/repository
+tasks:
+  - setup-jdk: |
+      set -eu
+      # Ubuntu 24.04 ships JDK 21; Mellow targets Java 25, so fetch Temurin 25
+      # from the Adoptium API (the same "download a JDK" approach used in
+      # hiredmonday's CI for Mandrel).
+      if [ ! -x "$JAVA_HOME/bin/java" ]; then
+        mkdir -p "$JAVA_HOME"
+        curl -fsSL -o /tmp/jdk25.tar.gz \
+          "https://api.adoptium.net/v3/binary/latest/25/ga/linux/x64/jdk/hotspot/normal/eclipse"
+        tar xzf /tmp/jdk25.tar.gz -C "$JAVA_HOME" --strip-components=1
+        rm -f /tmp/jdk25.tar.gz
+      fi
+      export PATH="$JAVA_HOME/bin:$PATH"
+      java -version
+      mvn -version
+  - test: |
+      export PATH="$JAVA_HOME/bin:$PATH"
+      cd mellow
+      # Compiles, runs the JUnit suite and produces the JaCoCo report
+      # (bound to the verify phase).
+      mvn -B clean verify
+  - coverage: |
+      export PATH="$JAVA_HOME/bin:$PATH"
+      cd mellow
+      if [ ! -f target/site/jacoco/jacoco.csv ]; then
+        mvn -B jacoco:report
+      fi
+      echo "=== Coverage summary ==="
+      awk -F, 'NR > 1 { lm += $8; lc += $9; bm += $6; bc += $7 }
+        END {
+          lt = lc + lm; bt = bc + bm;
+          printf "lines:    %d/%d (%.1f%%)\n", lc, lt, (lt > 0 ? 100 * lc / lt : 0);
+          printf "branches: %d/%d (%.1f%%)\n", bc, bt, (bt > 0 ? 100 * bc / bt : 0);
+        }' target/site/jacoco/jacoco.csv
+    artifacts:
+      - mellow/target/site/jacoco
