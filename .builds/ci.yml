@@ -6,7 +6,7 @@ packages:
   - build-essential # C toolchain required to link the GraalVM native image
   - zlib1g-dev # libz.a, required to link the GraalVM native image
 sources:
-  - git@git.sr.ht:~wasilwa/mellow
+  - https://git.sr.ht/~wasilwa/mellow
 environment:
   JAVA_HOME: /home/build/jdk25
   MAVEN_OPTS: -Dmaven.repo.local=/home/build/.m2/repository
