@@ -1,0 +1,18 @@
+#!/bin/sh
+# Pre-commit checks for the Java project (Java 25 + Maven).
+
+echo "Running pre-commit checks..."
+
+if ! command -v mvn >/dev/null 2>&1; then
+    echo "⚠️  mvn not found, skipping pre-commit checks."
+    exit 0
+fi
+
+echo "Running mvn test..."
+if ! mvn -q test; then
+    echo "❌ Tests failed. Please fix failing tests."
+    exit 1
+fi
+
+echo "✅ Pre-commit checks passed!"
+exit 0

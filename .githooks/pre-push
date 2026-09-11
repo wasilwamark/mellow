@@ -1,0 +1,44 @@
+#!/bin/sh
+# Pre-push hook.
+#
+# When pushing to the "origin" remote (sr.ht), mirror the exact same refs to
+# the "github" remote so both stay in sync.
+#
+# Pushing to any other remote (e.g. github itself) is left untouched, which also
+# prevents the mirror push below from recursing.
+
+remote="$1"
+url="$2"
+
+# Only mirror pushes that go to origin.
+[ "$remote" = "origin" ] || exit 0
+
+# Nothing to do if there is no github remote.
+if ! git remote get-url github >/dev/null 2>&1; then
+    echo "pre-push: no 'github' remote configured; skipping mirror."
+    exit 0
+fi
+
+# Read the refs git is about to push (stdin) and build the same refspecs.
+refspecs=""
+while read -r local_ref local_sha remote_ref remote_sha; do
+    [ -z "$local_ref" ] && continue
+    if [ "$local_sha" = "0000000000000000000000000000000000000000" ]; then
+        # Branch deletion -> delete it on github too.
+        refspecs="$refspecs :${remote_ref#refs/heads/}"
+    else
+        refspecs="$refspecs $local_ref:$remote_ref"
+    fi
+done
+
+[ -n "$refspecs" ] || exit 0
+
+echo "pre-push: mirroring to github..."
+# shellcheck disable=SC2086
+if git push github $refspecs; then
+    echo "✅ Mirrored to github."
+else
+    echo "⚠️  Failed to mirror to github (the origin push will continue)."
+fi
+
+exit 0

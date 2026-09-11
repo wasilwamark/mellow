@@ -107,4 +107,15 @@ make package       # or: mvn -DskipTests package
 make run           # build and launch
 ```
 
+### Git hooks
+
+Hooks live in `.githooks/`. Enable them once per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+- `pre-commit` runs `mvn test`.
+- `pre-push` mirrors a push to `origin` onto the `github` remote.
+
 See [docs/PLAN.md](docs/PLAN.md) for the architecture and porting notes.
