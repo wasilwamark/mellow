@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - Java rewrite
+
+### ⚠️ Breaking Changes
+
+*   **Complete rewrite in Java 25.** The Go implementation has been removed.
+*   New Maven coordinates `com.acaciawave:mellow`; base package `com.acaciawave.mellow`.
+*   CLI surface preserved: `mellow <user@host|alias> <service> <command> [args...]`.
+
+### ✨ Features
+
+*   Built on Java 25, JLine 3 (terminal, completion, history) and Apache MINA SSHD.
+*   Interactive shell with tab completion and persistent history.
+*   Services: `system`, `nginx`, `mysql`, `docker`, `fail2ban`, `firewall`, `keycloak`, `restic`, `runtimes` and `alias`.
+
+### 🏗️ Build
+
+*   Maven build with a shaded runnable jar; optional GraalVM native-image profile.
+*   Removed Go modules, goreleaser configuration, release scripts and integration tests.
+
 ## [Unreleased] - 2025-12-20
 
 ### 🐛 Bug Fixes

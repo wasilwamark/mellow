@@ -1,43 +1,24 @@
-.PHONY: install clean test
+.PHONY: package test run clean native
 
-# Install to system (build and install globally)
-install:
-	@echo "Building mellow..."
-	go build -o /tmp/mellow ./cmd/mellow
-	@echo "Installing to /usr/local/bin..."
-	sudo cp /tmp/mellow /usr/local/bin/mellow && sudo chmod +x /usr/local/bin/mellow
-	@rm -f /tmp/mellow
-	@echo "✅ Installation complete! Run: mellow --help"
+# Maven must run on JDK 25 (JAVA_HOME must point at a JDK 25 install).
+MVN ?= mvn
+JAVA_BIN ?= $(JAVA_HOME)/bin/java
 
-# Build for multiple platforms
-build-all:
-	@echo "Building for multiple platforms..."
-	GOOS=linux GOARCH=amd64 go build -o mellow-linux-amd64 ./cmd/mellow
-	GOOS=linux GOARCH=arm64 go build -o mellow-linux-arm64 ./cmd/mellow
-	GOOS=darwin GOARCH=amd64 go build -o mellow-darwin-amd64 ./cmd/mellow
-	GOOS=darwin GOARCH=arm64 go build -o mellow-darwin-arm64 ./cmd/mellow
-	GOOS=windows GOARCH=amd64 go build -o mellow-windows-amd64.exe ./cmd/mellow
-	@echo "All builds completed"
+# Build the runnable fat jar: target/mellow.jar
+package:
+	$(MVN) -q -DskipTests package
 
-# Clean build artifacts
-clean:
-	@echo "Cleaning..."
-	@rm -rf bin/ /tmp/mellow 2>/dev/null || true
-
-# Run tests
+# Run the unit test suite
 test:
-	go test ./...
+	$(MVN) test
 
-# Download dependencies
-deps:
-	go mod download
-	go mod tidy
+# Build and run interactively
+run: package
+	$(JAVA_BIN) -jar target/mellow.jar
 
-# Format code
-fmt:
-	go fmt ./...
+# GraalVM native image (requires GraalVM for JDK 25)
+native:
+	$(MVN) -Pnative package
 
-# Lint code
-lint:
-	golangci-lint run
-
+clean:
+	$(MVN) -q clean

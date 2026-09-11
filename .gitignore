@@ -1,85 +1,19 @@
-# Terraform
-*.tfstate
-*.tfstate.*
-.terraform/
-.terraform.lock.hcl
-crash.log
-crash.*.log
+# Maven / Java
+target/
+*.class
+.mvn/wrapper/maven-wrapper.jar
 
-# Configuration files
-server.yaml
-terraform.tfvars
-*.auto.tfvars
-*.auto.tfvars.json
+# GraalVM native binary
+/mellow
+/mellow-native
 
-# SSH keys
-*.pem
-*.key
-id_rsa*
-
-# Provider credentials
-.env
-.env.local
-.secrets
-
-# Python
-.venv/
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-.python-version
-.pyproject.toml
-.uv.lock
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# PyInstaller
-*.manifest
-*.spec
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Ruff
-.ruff_cache/
+# Mellow runtime cache
+.mellow/cache/
 
 # IDE
 .idea/
 .vscode/
+*.iml
 *.swp
 *.swo
 
@@ -91,21 +25,7 @@ Thumbs.db
 *.log
 logs/
 
-# Go
-/bin/
-/dbin/*
-/mellow
-*.exe
-*.test
-*.prof
-go.work
-
-# plugins
-mellow-core
-mellow-ssh
-<<<<<<< HEAD
-mellow-keycloak~/.mellow/cache/
-=======
-mellow-keycloak
-.mellow/cache/
->>>>>>> 7f98f99 (release: v0.0.6)
+# SSH keys
+*.pem
+*.key
+id_rsa*
