@@ -15,7 +15,7 @@
 | Command model (`Command`/`Provider`/`Registry`/`Dispatcher`/`FlagParser`) | ✅ | `src/main/java/com/acaciawave/mellow/cli` |
 | Config (`~/.mellow` aliases/secrets, `0600`) | ✅ | `com/acaciawave/mellow/config` |
 | Distro detection + package-manager abstraction | ✅ | `com/acaciawave/mellow/distro`, `com/acaciawave/mellow/pkgmgr` |
-| SSH layer on Apache MINA SSHD | ✅ compiles · ⏳ live integration test | `com/acaciawave/mellow/ssh` |
+| SSH layer on Apache MINA SSHD | ✅ | `com/acaciawave/mellow/ssh` |
 | `alias` provider (local) | ✅ | `com/acaciawave/mellow/command/alias` |
 | `system` provider | ✅ | `com/acaciawave/mellow/command/system` |
 | `nginx` provider | ✅ | `com/acaciawave/mellow/command/nginx` |
@@ -27,7 +27,7 @@
 | `runtimes` provider | ✅ | `com/acaciawave/mellow/command/runtimes` |
 | `keycloak` provider | ✅ | `com/acaciawave/mellow/command/keycloak` |
 | Unit tests (69) | ✅ | `src/test/java` |
-| SSH integration test (live) | ⏳ Phase 1 (no Docker here) | — |
+| Integration tests — real distro containers (Ubuntu/Debian/Alpine/Fedora) | ✅ Testcontainers + Failsafe | `src/test/java/com/acaciawave/mellow/it` |
 | JLine interactive REPL + completion | ✅ | `com/acaciawave/mellow/cli/Repl.java` |
 | GraalVM native image | ✅ built with GraalVM for JDK 25 | `pom.xml` (`-Pnative`), `.builds/ci.yml` |
 | CI / release matrix | ⛔ Phase 6 | — |
@@ -35,13 +35,21 @@
 **Run it:**
 
 ```bash
-mvn -DskipTests package          # -> target/mellow.jar
+mvn -DskipTests package                     # -> target/mellow.jar
 $JAVA_HOME/bin/java -jar target/mellow.jar
+make test                                    # unit tests
+make it                                      # integration tests (needs Docker)
+make verify                                  # unit + integration + coverage
 # or: make package test run
 ```
 
-**Immediate next steps:** live SSH integration test against a Testcontainers
-`sshd` container, then the JLine interactive REPL (Phase 4).
+**Integration testing:** `*IT` tests (Failsafe) spin up SSH-enabled real
+containers via Testcontainers and run the Mellow CLI against them — the
+`system` lifecycle on every distro, plus a full command matrix. Without Docker
+they are skipped; select distros with `-Dit.distros=ubuntu,debian`.
+
+**Next steps:** expand container coverage (Rocky/Alma, Arch), and a release
+matrix for the native binary (Phase 6).
 
 ---
 
@@ -262,7 +270,7 @@ Timeout semantics preserved: `ConnectTimeout=10`, `ServerAliveInterval=30` →
 - [x] `Command`/`Provider`/`Registry`/`Dispatcher` port (from `internal/api` + `internal/cli`)
 - [x] `config` (aliases.json/secrets.json parity, incl. env fallback `SSH_PWD_<ALIAS>`)
 - [x] `ssh` layer with MINA SSHD: connect, `RunCommand`, `RunSudo`, `WriteFile`, distro probe
-- [ ] **SSH integration test against a Testcontainers `sshd` container**
+- [x] **SSH integration test** against real-distro Testcontainers (Ubuntu/Debian/Alpine/Fedora)
 - [x] `distro` + `pkgmgr` port
 - [x] `Output`/emoji parity; exit codes (0 ok, 1 error)
 
@@ -273,7 +281,7 @@ Timeout semantics preserved: `ConnectTimeout=10`, `ServerAliveInterval=30` →
 ### Phase 3 — Remaining services (parallelizable, port provider-per-commit)
 - [x] `alias`, `nginx`, `mysql`, `docker`, `fail2ban`, `firewall`, `restic`, `runtimes`, `keycloak`
 - [x] For each: commands table + unit tests for pure helpers
-- [ ] Live integration test per service (see §8)
+- [x] Live integration test per service: full command matrix + `system` lifecycle on each distro (see §8)
 
 ### Phase 4 — JLine interactive mode
 - [x] `Repl` + completers (services, commands, aliases)
@@ -289,7 +297,8 @@ Timeout semantics preserved: `ConnectTimeout=10`, `ServerAliveInterval=30` →
 - [ ] `mvn -Pnative test` (JUnit runs on JVM; native verified via CLI smoke suite)
 
 ### Phase 6 — CI / release
-- [ ] GitHub Actions: build native 4-platform matrix, unit + integration tests, release on tags
+- [x] SourceHut CI: Temurin 25, Docker, `mvn -B clean verify` (unit + integration + coverage), GraalVM native image
+- [ ] GitHub Actions: build native 4-platform matrix, release on tags
 - [ ] Docs update (README parity), `CHANGELOG`
 
 ## 8. Testing strategy

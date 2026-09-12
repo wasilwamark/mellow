@@ -102,11 +102,17 @@ mellow myserver firewall allow 80
 ## Development
 
 ```bash
-make test          # or: mvn test
+make test          # or: mvn test         (unit)
+make it            # integration tests in real distro containers (needs Docker)
 make coverage      # tests + JaCoCo report (target/site/jacoco)
 make package       # or: mvn -DskipTests package
 make run           # build and launch
 ```
+
+Integration tests (`*IT`) start SSH-enabled Ubuntu/Debian/Alpine/Fedora
+containers with Testcontainers and run the Mellow CLI against them. They are
+skipped automatically when Docker is unavailable; select distros with
+`make it IT_DISTROS=ubuntu,debian` (or `mvn verify -Dit.distros=...`).
 
 ### Git hooks
 

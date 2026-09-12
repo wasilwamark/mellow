@@ -19,10 +19,11 @@ JAR       ?= target/mellow.jar
 JAVA_BIN  ?= $(if $(JAVA_HOME),$(JAVA_HOME)/bin/java,java)
 ARGS      ?=
 TEST      ?=
+IT_DISTROS ?= ubuntu,debian,alpine,fedora
 
 .DEFAULT_GOAL := build
 
-.PHONY: help build package jar test test-one verify coverage run install uninstall native deps hooks version clean distclean
+.PHONY: help build package jar test test-one verify coverage run install uninstall native deps hooks version clean distclean it
 
 # ---- help ------------------------------------------------------------------
 help: ## Show this help
@@ -52,6 +53,9 @@ verify: ## Run the full Maven verify lifecycle
 coverage: ## Run tests and generate the JaCoCo report (target/site/jacoco)
 	$(MVN) $(MVN_FLAGS) -q verify
 	@echo "📊 Coverage report: target/site/jacoco/index.html"
+
+it: ## Run integration tests in real distro containers (needs Docker; IT_DISTROS=...)
+	$(MVN) $(MVN_FLAGS) test-compile failsafe:integration-test failsafe:verify -Dit.distros="$(IT_DISTROS)"
 
 run: package ## Build and run (pass arguments with ARGS="...")
 	$(JAVA_BIN) -jar $(JAR) $(ARGS)

@@ -26,11 +26,32 @@ tasks:
       export PATH="$JAVA_HOME/bin:$PATH"
       java -version
       mvn -version
+  - setup-docker: |
+      set -eu
+      # Integration tests spin up real-distro containers via Testcontainers,
+      # which needs a Docker daemon. sr.ht build VMs have no systemd, so start
+      # dockerd directly and wait for it.
+      if ! command -v docker >/dev/null 2>&1; then
+        sudo apt-get update -qq
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq docker.io
+      fi
+      if ! sudo docker info >/dev/null 2>&1; then
+        sudo dockerd >/tmp/dockerd.log 2>&1 &
+        for _ in $(seq 1 30); do
+          sudo docker info >/dev/null 2>&1 && break
+          sleep 2
+        done
+      fi
+      if ! sudo docker info >/dev/null 2>&1; then
+        echo "❌ Docker failed to start:"; sudo tail -50 /tmp/dockerd.log; exit 1
+      fi
+      sudo chmod 666 /var/run/docker.sock
+      docker info --format 'Docker server {{.ServerVersion}}'
   - test: |
       export PATH="$JAVA_HOME/bin:$PATH"
       cd mellow
-      # Compiles, runs the JUnit suite and produces the JaCoCo report
-      # (bound to the verify phase).
+      # Unit tests, integration tests (real-distro containers) and the JaCoCo
+      # report (bound to the verify phase).
       mvn -B clean verify
   - coverage: |
       export PATH="$JAVA_HOME/bin:$PATH"

@@ -35,6 +35,12 @@ import com.acaciawave.mellow.pkgmgr.PackageManagers;
  */
 public final class SshConnection implements Connection {
 
+    /**
+     * How long to wait for a remote command to finish. Deliberately generous:
+     * package installs, image pulls and backups routinely take minutes.
+     */
+    private static final Duration COMMAND_TIMEOUT = Duration.ofHours(2);
+
     private final SshConfig config;
 
     private SshClient client;
@@ -72,6 +78,11 @@ public final class SshConnection implements Connection {
             this.session = newSession;
             return true;
         } catch (Exception e) {
+            if (Boolean.getBoolean("mellow.ssh.debug")) {
+                System.err.println("SSH connection to " + config.user() + "@" + config.host() + ":"
+                        + config.port() + " failed: " + e);
+                e.printStackTrace();
+            }
             newClient.stop();
             return false;
         }
@@ -173,6 +184,13 @@ public final class SshConnection implements Connection {
 
     @Override
     public void runInteractive(String command) {
+        // In headless/test contexts (mellow.ssh.captureInteractive=true) do not wire
+        // the process streams to the pty: streaming stdin/stdout would fight with the
+        // test harness and pty pagers (e.g. `systemctl status`) can block on stdin.
+        if (Boolean.getBoolean("mellow.ssh.captureInteractive")) {
+            exec(command, null);
+            return;
+        }
         ClientSession target = requireSession();
         try (ChannelExec channel = target.createExecChannel(command)) {
             channel.setPtyType("xterm-256color");
@@ -212,7 +230,7 @@ public final class SshConnection implements Connection {
                 channel.setIn(new ByteArrayInputStream(stdin));
             }
             channel.open().verify(config.timeout());
-            channel.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), config.timeout().toMillis());
+            channel.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), COMMAND_TIMEOUT.toMillis());
             int exitCode = channel.getExitStatus() == null ? -1 : channel.getExitStatus();
             return new CommandResult(
                     exitCode == 0,

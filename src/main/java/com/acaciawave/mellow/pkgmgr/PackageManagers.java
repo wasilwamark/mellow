@@ -48,7 +48,9 @@ public final class PackageManagers {
     }
 
     static final class Dnf implements PackageManager {
-        @Override public String update() { return "dnf check-update -y"; }
+        // `dnf check-update` exits 100 when updates are available, which is not a
+        // failure; makecache refreshes metadata and returns 0.
+        @Override public String update() { return "dnf makecache -y"; }
         @Override public String upgrade() { return "dnf upgrade -y"; }
         @Override public String distUpgrade() { return "dnf distro-sync -y"; }
         @Override public String autoremove() { return "dnf autoremove -y"; }
